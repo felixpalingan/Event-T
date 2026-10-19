@@ -92,17 +92,17 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     role: "ADMIN",
     nimNidn: "198504122010121001",
     prodi: "Teknik Informatika",
-    roleTitle: "KREDENSIAL DEKANAT",
+    roleTitle: "KREDENSIAL ADMINISTRATOR",
     badge: "Administrator",
     badgeClass: "bg-purple-50 text-purple-800 border-purple-200",
     cardClass: "border-purple-200 hover:border-purple-500 hover:shadow-[0_12px_30px_-8px_rgba(147,51,234,0.25)]",
     headerGradient: "from-purple-700 via-indigo-700 to-purple-800",
     avatarClass: "bg-gradient-to-tr from-purple-700 to-pink-500 text-white shadow-md shadow-purple-500/30",
     buttonClass: "bg-purple-700 hover:bg-purple-800 text-white shadow-md shadow-purple-500/20",
-    scenario: "Konsol Admin Dekanat: edit event, upload background template sertifikat, ekspor CSV BAAK, & broadcast notifikasi.",
+    scenario: "Konsol Admin: edit event, upload background template sertifikat, ekspor CSV BAAK, & broadcast notifikasi.",
     targetRoute: "/admin",
     statusBadges: [
-      { icon: Building2, label: "Konsol Dekanat FTI", tone: "bg-purple-50 text-purple-700 border-purple-200" },
+      { icon: Building2, label: "Konsol Admin", tone: "bg-purple-50 text-purple-700 border-purple-200" },
       { icon: FileSpreadsheet, label: "Ekspor Rekap CSV BAAK", tone: "bg-indigo-50 text-indigo-700 border-indigo-200" },
       { icon: Sparkles, label: "Template Sertifikat & Broadcast", tone: "bg-pink-50 text-pink-700 border-pink-200" }
     ]

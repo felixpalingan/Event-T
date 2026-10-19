@@ -122,7 +122,7 @@ export default function AdminDashboardPage() {
           </div>
           <div>
             <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
-              <span>Konsol Tata Kelola Administrator FTI</span>
+              <span>Konsol Admin</span>
             </h1>
             <span className="text-[10px] md:text-xs text-blue-700 font-semibold block">
               Pusat Manajemen Kegiatan Kampus &amp; Pelaporan BAAK

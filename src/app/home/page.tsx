@@ -232,7 +232,7 @@ export default function HomePage() {
                 Hak Akses Administrator Aktif
               </span>
               <p className="text-xs md:text-sm text-blue-900 font-medium">
-                Pusat kendali operasional dekanat: publikasi acara, bank soal, dan ekspor rekapitulasi BAAK.
+                Pusat kendali operasional admin: publikasi acara, bank soal, dan ekspor rekapitulasi BAAK.
               </p>
             </div>
             <Link
