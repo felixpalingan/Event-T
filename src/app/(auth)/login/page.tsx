@@ -15,11 +15,8 @@ import {
   Shield, 
   ScanLine, 
   User, 
-  CheckCircle2, 
   ChevronRight,
-  Sparkles,
-  AlertTriangle,
-  QrCode
+  Sparkles
 } from "lucide-react";
 
 interface DemoAccount {
@@ -48,7 +45,7 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     role: "MAHASISWA",
     nimNidn: "065002300016",
     prodi: "Teknik Informatika",
-    badge: "Peserta Utama",
+    badge: "Mahasiswa / Peserta",
     badgeColor: "bg-blue-50 text-blue-700 border-blue-200",
     cardBorder: "border-blue-200 hover:border-blue-400 focus:ring-blue-400",
     cardBg: "bg-gradient-to-br from-white to-blue-50/40",
@@ -59,9 +56,9 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     features: ["Check-In: Sudah Hadir", "Pre-Test: 80 / 100", "Post-Test & E-Sertifikat Siap"]
   },
   {
-    id: "dewanto",
-    name: "Dewanto",
-    email: "dewanto@trisakti.ac.id",
+    id: "pani",
+    name: "Pani",
+    email: "pani@trisakti.ac.id",
     role: "PANITIA",
     nimNidn: "065002100005",
     prodi: "Teknik Informatika",
@@ -71,14 +68,14 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     cardBg: "bg-gradient-to-br from-white to-emerald-50/40",
     iconBg: "bg-emerald-600 text-white",
     iconColor: "text-emerald-600",
-    scenario: "Akses scanner kamera presensi pintu, pemilih acara aktif, & sakelar kontrol gembok post-test.",
+    scenario: "Akses scanner kamera presensi pintu gerbang, pemilih acara aktif, & sakelar kontrol gembok post-test.",
     targetRoute: "/panitia/scanner",
     features: ["Scanner Kamera QR", "Pemilih Acara Aktif", "Buka/Tutup Gembok Soal"]
   },
   {
-    id: "bayu",
-    name: "Bayu",
-    email: "bayu@trisakti.ac.id",
+    id: "admin",
+    name: "Admin",
+    email: "admin@trisakti.ac.id",
     role: "ADMIN",
     nimNidn: "198504122010121001",
     prodi: "Teknik Informatika",
@@ -88,43 +85,9 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     cardBg: "bg-gradient-to-br from-white to-purple-50/40",
     iconBg: "bg-purple-700 text-white",
     iconColor: "text-purple-600",
-    scenario: "Konsol Admin Dekanat: edit event, upload background template sertifikat, ekspor CSV BAAK, & broadcast pengumuman.",
+    scenario: "Konsol Admin Dekanat: edit event, upload background template sertifikat, ekspor CSV BAAK, & broadcast notifikasi.",
     targetRoute: "/admin",
     features: ["Edit Event & Template PDF", "Ekspor CSV Data BAAK", "Broadcast Notifikasi Peserta"]
-  },
-  {
-    id: "rayyan",
-    name: "Rayyan",
-    email: "rayyan@trisakti.ac.id",
-    role: "MAHASISWA",
-    nimNidn: "065002300042",
-    prodi: "Sistem Informasi",
-    badge: "Uji Scan Gerbang",
-    badgeColor: "bg-sky-50 text-sky-800 border-sky-200",
-    cardBorder: "border-sky-200 hover:border-sky-400 focus:ring-sky-400",
-    cardBg: "bg-gradient-to-br from-white to-sky-50/40",
-    iconBg: "bg-sky-600 text-white",
-    iconColor: "text-sky-600",
-    scenario: "Terdaftar Seminar AI, status belum check-in. Buka tiket digital ini untuk di-scan oleh Panitia Dewanto!",
-    targetRoute: "/tickets",
-    features: ["Tiket Seminar AI Siap", "Status: Belum Check-In", "Uji Presensi Pintu Masuk"]
-  },
-  {
-    id: "bambang",
-    name: "Bambang",
-    email: "bambang@trisakti.ac.id",
-    role: "MAHASISWA",
-    nimNidn: "064002300018",
-    prodi: "Teknik Industri",
-    badge: "Uji Tolak Beda Acara",
-    badgeColor: "bg-amber-50 text-amber-800 border-amber-200",
-    cardBorder: "border-amber-200 hover:border-amber-400 focus:ring-amber-400",
-    cardBg: "bg-gradient-to-br from-white to-amber-50/40",
-    iconBg: "bg-amber-600 text-white",
-    iconColor: "text-amber-600",
-    scenario: "Tiket terdaftar di Workshop Next.js. Scan tiket ini saat Scanner di Acara AI untuk uji alert merah tolak tiket!",
-    targetRoute: "/tickets",
-    features: ["Tiket Workshop Next.js", "Acara Berbeda", "Uji Alert WRONG_EVENT"]
   }
 ];
 
@@ -270,7 +233,7 @@ export default function LoginPage() {
             Portal Masuk Terpadu FTI Event!t
           </h1>
           <p className="text-xs md:text-sm text-slate-600 max-w-xl mx-auto">
-            Klik salah satu akun demo di bawah ini untuk langsung masuk (1-klik) dan menjelajahi fitur sesuai peran sivitas akademik Fakultas Teknologi Industri.
+            Klik salah satu akun di bawah ini untuk langsung masuk (1-klik) dan menjelajahi fitur sesuai peran sivitas akademik Fakultas Teknologi Industri.
           </p>
         </div>
 
@@ -281,18 +244,18 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* 1-Click Fast Demo Accounts Switcher Cards */}
+        {/* 1-Click Fast Demo Accounts Switcher Cards (3 Accounts: Felix, Pani, Admin) */}
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              Daftar Akun Demo Resmi FTI
+              Pilih Akun Demo
             </span>
             <span className="text-[11px] text-slate-500 font-medium">
-              Kata Sandi Bersama: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold text-slate-800">Password123!</code>
+              Kata Sandi: <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono font-bold text-slate-800">Password123!</code>
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
             {DEMO_ACCOUNTS.map((acc) => {
               const isLoggingIn = activeLoggingInId === acc.id;
 
@@ -345,7 +308,7 @@ export default function LoginPage() {
                     </p>
                   </div>
 
-                  {/* Feature Tags & Action Button */}
+                  {/* Action Button */}
                   <div className="pt-2.5 border-t border-slate-200/70 flex items-center justify-between">
                     <span className="text-[11px] font-bold text-blue-700 flex items-center gap-1">
                       {isLoggingIn ? (
