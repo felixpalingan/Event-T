@@ -56,15 +56,24 @@ export function BottomNav() {
 
     fetchUserRole();
 
-    // 3. Listen for role change event from profile switcher
+    // 3. Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchUserRole();
+    });
+
+    // 4. Listen for role change event from profile switcher
     const handleRoleChanged = () => {
       const updated = localStorage.getItem("user_role") as RoleType | null;
       if (updated) setRole(updated);
+      fetchUserRole();
     };
 
     window.addEventListener("role_changed", handleRoleChanged);
-    return () => window.removeEventListener("role_changed", handleRoleChanged);
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("role_changed", handleRoleChanged);
+    };
+  }, [pathname]);
 
   // Configure navigation items strictly based on user's authorized role
   const getNavItems = () => {

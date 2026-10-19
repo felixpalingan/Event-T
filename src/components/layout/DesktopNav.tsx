@@ -65,7 +65,25 @@ export function DesktopNav() {
     };
 
     fetchUser();
-  }, []);
+
+    // 3. Listen to auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      fetchUser();
+    });
+
+    // 4. Listen to role_changed custom event
+    const handleRoleChanged = () => {
+      const stored = localStorage.getItem("user_role") as RoleType | null;
+      if (stored) setRole(stored);
+      fetchUser();
+    };
+
+    window.addEventListener("role_changed", handleRoleChanged);
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener("role_changed", handleRoleChanged);
+    };
+  }, [pathname]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();

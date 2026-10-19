@@ -129,10 +129,10 @@ export default function LoginPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem("user_role", account.role);
           window.dispatchEvent(new Event("role_changed"));
+          window.location.href = account.targetRoute;
+        } else {
+          router.push(account.targetRoute);
         }
-
-        router.push(account.targetRoute);
-        router.refresh();
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -173,16 +173,12 @@ export default function LoginPage() {
         if (typeof window !== "undefined") {
           localStorage.setItem("user_role", userRole);
           window.dispatchEvent(new Event("role_changed"));
-        }
 
-        if (userRole === "ADMIN") {
-          router.push("/admin");
-        } else if (userRole === "PANITIA") {
-          router.push("/panitia/scanner");
+          const target = userRole === "ADMIN" ? "/admin" : userRole === "PANITIA" ? "/panitia/scanner" : "/events";
+          window.location.href = target;
         } else {
-          router.push("/events");
+          router.push(userRole === "ADMIN" ? "/admin" : userRole === "PANITIA" ? "/panitia/scanner" : "/events");
         }
-        router.refresh();
       }
     } catch (err: unknown) {
       const error = err as Error;
