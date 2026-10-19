@@ -35,7 +35,25 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        router.push("/events");
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, name")
+          .eq("id", data.user.id)
+          .single();
+
+        const userRole = (profile?.role as string) || "MAHASISWA";
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user_role", userRole);
+          window.dispatchEvent(new Event("role_changed"));
+        }
+
+        if (userRole === "ADMIN") {
+          router.push("/admin");
+        } else if (userRole === "PANITIA") {
+          router.push("/panitia/attendees");
+        } else {
+          router.push("/events");
+        }
         router.refresh();
       }
     } catch (err: unknown) {

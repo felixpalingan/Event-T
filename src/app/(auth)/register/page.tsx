@@ -84,6 +84,22 @@ export default function RegisterPage() {
       }
 
       if (data.user) {
+        if (!data.session) {
+          try {
+            await supabase.auth.signInWithPassword({
+              email: email.trim(),
+              password: password,
+            });
+          } catch {
+            // Continue
+          }
+        }
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user_role", "MAHASISWA");
+          window.dispatchEvent(new Event("role_changed"));
+        }
+
         setSuccessMsg(true);
         setTimeout(() => {
           router.push("/events");
