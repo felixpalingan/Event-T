@@ -1,14 +1,48 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
-import { ShieldAlert, ArrowLeft, QrCode, Home } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { ShieldAlert, ArrowLeft, QrCode, Home, Sparkles, Loader2 } from "lucide-react";
 import { Suspense } from "react";
 
 function UnauthorizedContent() {
   const searchParams = useSearchParams();
-  const requiredRole = searchParams.get("required") || "PETUGAS";
+  const router = useRouter();
+  const supabase = createClient();
+  const requiredRole = searchParams.get("required") || "PANITIA";
+  const [switching, setSwitching] = useState(false);
+
+  const handleGrantRole = async () => {
+    setSwitching(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from("profiles")
+          .update({ role: requiredRole })
+          .eq("id", user.id);
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user_role", requiredRole);
+          window.dispatchEvent(new Event("role_changed"));
+        }
+
+        if (requiredRole === "ADMIN") {
+          router.push("/admin");
+        } else {
+          router.push("/panitia/scanner");
+        }
+        router.refresh();
+      }
+    } catch {
+      // Ignored
+    } finally {
+      setSwitching(false);
+    }
+  };
 
   return (
     <main className="flex-1 px-5 py-12 flex flex-col items-center justify-center text-center">
@@ -26,11 +60,30 @@ function UnauthorizedContent() {
 
       <p className="text-xs text-slate-500 mt-2 max-w-xs leading-relaxed">
         {requiredRole === "ADMIN"
-          ? "Halaman ini hanya dapat diakses oleh Administrator / Pimpinan Fakultas untuk pengelolaan acara dan rekapitulasi data."
+          ? "Halaman ini hanya dapat diakses oleh Administrator Fakultas untuk pengelolaan acara dan rekapitulasi data."
           : "Halaman ini dikhususkan bagi Panitia Lapangan untuk melakukan pemindaian tiket presensi di pintu masuk aula."}
       </p>
 
-      <div className="mt-8 w-full max-w-xs space-y-2.5">
+      <div className="mt-6 w-full max-w-xs space-y-2.5">
+        {/* Quick Role Switcher for Campus Testing */}
+        <button
+          onClick={handleGrantRole}
+          disabled={switching}
+          className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-98 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2"
+        >
+          {switching ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Memperbarui Izin Akun...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              <span>Aktifkan Peran {requiredRole === "ADMIN" ? "Admin" : "Panitia"} (Uji Coba)</span>
+            </>
+          )}
+        </button>
+
         <Link
           href="/tickets"
           className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2"
@@ -48,8 +101,8 @@ function UnauthorizedContent() {
         </Link>
       </div>
 
-      <div className="mt-8 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 max-w-xs">
-        Jika Anda adalah panitia atau admin yang bertugas, pastikan akun Anda telah diberikan wewenang di database atau hubungi ketua pelaksana acara.
+      <div className="mt-6 p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 max-w-xs">
+        Mode pengujian aktif: Anda dapat mengaktifkan peran Panitia secara instan untuk mencoba scanner presensi pintu.
       </div>
     </main>
   );

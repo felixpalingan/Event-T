@@ -1,5 +1,7 @@
-import { redirect } from "next/navigation";
+"use client";
 
-export default function ScannerRedirect() {
-  redirect("/panitia/scanner");
+import { TicketScanner } from "@/components/scanner/TicketScanner";
+
+export default function DirectScannerPage() {
+  return <TicketScanner />;
 }
