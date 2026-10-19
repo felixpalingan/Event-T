@@ -11,7 +11,9 @@ import {
   AlertCircle, 
   Download, 
   ArrowLeft, 
-  FileText 
+  FileText,
+  Calendar,
+  Sparkles
 } from "lucide-react";
 
 interface CertificateItem {
@@ -25,27 +27,10 @@ interface CertificateItem {
   certificateNo: string;
 }
 
-const DEMO_CERTS: CertificateItem[] = [
-  {
-    eventId: 1,
-    eventTitle: "AI Engineering & Modern Cloud Architecture at Scale",
-    eventDate: "2026-10-24T09:00:00Z",
-    skpiPoints: 15,
-    isCheckedIn: true,
-    hasPostTest: true,
-    postTestScore: 90,
-    certificateNo: "CERT-FTI/2026/001/0012",
-  },
-];
-
 export default function CertificatesPage() {
   const supabase = createClient();
-  const [items, setItems] = useState<CertificateItem[]>(DEMO_CERTS);
-  const [studentProfile, setStudentProfile] = useState<{ name: string; nim_nidn: string; prodi: string } | null>({
-    name: "Felix Palingan",
-    nim_nidn: "065002100012",
-    prodi: "Teknik Informatika",
-  });
+  const [items, setItems] = useState<CertificateItem[]>([]);
+  const [studentProfile, setStudentProfile] = useState<{ name: string; nim_nidn: string; prodi: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -61,6 +46,7 @@ export default function CertificatesPage() {
         return;
       }
 
+      // 1. Fetch profile
       const { data: profile } = await supabase
         .from("profiles")
         .select("name, nim_nidn, prodi")
@@ -69,12 +55,13 @@ export default function CertificatesPage() {
 
       if (profile) setStudentProfile(profile);
 
+      // 2. Fetch tickets
       const { data: tickets } = await supabase
         .from("tickets")
         .select(`
           event_id,
           is_checked_in,
-          event:events (
+          event:events!tickets_event_id_fkey (
             id,
             title,
             event_start_at,
@@ -83,6 +70,7 @@ export default function CertificatesPage() {
         `)
         .eq("user_id", user.id);
 
+      // 3. Fetch test scores
       const { data: scores } = await supabase
         .from("user_test_scores")
         .select("event_id, post_test_score")
@@ -93,27 +81,61 @@ export default function CertificatesPage() {
         scoreMap.set(Number(s.event_id), s.post_test_score);
       });
 
+      // 4. Fetch minted certificates
+      const { data: dbCerts } = await supabase
+        .from("certificates")
+        .select("event_id, certificate_no, issued_at")
+        .eq("user_id", user.id);
+
+      const certMap = new Map<number, string>();
+      dbCerts?.forEach((c) => {
+        certMap.set(Number(c.event_id), c.certificate_no);
+      });
+
       if (tickets && tickets.length > 0) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const certList: CertificateItem[] = tickets.map((t: any) => {
-          const ev = t.event;
-          const score = scoreMap.get(Number(t.event_id));
-          return {
-            eventId: Number(t.event_id),
-            eventTitle: ev?.title || "Seminar FTI",
-            eventDate: ev?.event_start_at || new Date().toISOString(),
-            skpiPoints: ev?.skpi_points || 0,
-            isCheckedIn: Boolean(t.is_checked_in),
-            hasPostTest: score !== undefined && score !== null,
-            postTestScore: score ?? null,
-            certificateNo: `CERT-FTI/2026/${String(t.event_id).padStart(3, "0")}/${profile?.nim_nidn?.slice(-4) || "0001"}`,
-          };
-        });
+        const certList: CertificateItem[] = await Promise.all(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          tickets.map(async (t: any) => {
+            const ev = t.event;
+            const score = scoreMap.get(Number(t.event_id));
+            let certNo = certMap.get(Number(t.event_id));
+
+            // If eligible (checked-in and post-test >= 60) but not yet in DB certificates, auto-mint
+            if (t.is_checked_in && score !== undefined && score !== null && score >= 60 && !certNo) {
+              certNo = `CERT-FTI/${new Date().getFullYear()}/${String(t.event_id).padStart(3, "0")}/${profile?.nim_nidn?.slice(-4) || String(Math.floor(1000 + Math.random() * 9000))}`;
+              try {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                await supabase.from("certificates").upsert({
+                  certificate_no: certNo,
+                  user_id: user.id,
+                  event_id: Number(t.event_id),
+                  issued_at: new Date().toISOString(),
+                } as any, { onConflict: "user_id,event_id" });
+              } catch {
+                // Ignore upsert error
+              }
+            }
+
+            return {
+              eventId: Number(t.event_id),
+              eventTitle: ev?.title || "Kegiatan FTI Trisakti",
+              eventDate: ev?.event_start_at || new Date().toISOString(),
+              skpiPoints: ev?.skpi_points || 0,
+              isCheckedIn: Boolean(t.is_checked_in),
+              hasPostTest: score !== undefined && score !== null,
+              postTestScore: score ?? null,
+              certificateNo: certNo || `DRAFT-FTI/${String(t.event_id).padStart(3, "0")}/${profile?.nim_nidn?.slice(-4) || "0001"}`,
+            };
+          })
+        );
 
         setItems(certList);
+      } else {
+        setItems([]);
       }
     } catch {
-      // Keep demo certs
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -131,7 +153,7 @@ export default function CertificatesPage() {
     const width = doc.internal.pageSize.getWidth();
     const height = doc.internal.pageSize.getHeight();
 
-    // Background: Clean Academic White / Ivory
+    // Background: Clean Academic White
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, width, height, "F");
 
@@ -236,7 +258,7 @@ export default function CertificatesPage() {
           </div>
         </div>
         <span className="text-[10px] md:text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
-          Syarat: Hadir di Pintu + Lulus Post-Test
+          Syarat: Hadir + Lulus Post-Test
         </span>
       </header>
 
@@ -244,91 +266,136 @@ export default function CertificatesPage() {
       <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-4">
         <div className="text-center px-2 max-w-xl mx-auto">
           <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
-            Sertifikat PDF berlisensi resmi universitas dapat langsung diunduh ke ponsel/laptop setelah kedua syarat kelulusan terpenuhi.
+            Sertifikat PDF berlisensi resmi universitas dapat langsung diunduh ke ponsel atau laptop setelah kedua syarat kelulusan terpenuhi.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {items.map((item) => {
-            const isEligible = item.isCheckedIn && item.hasPostTest;
-
-          return (
-            <div
-              key={item.eventId}
-              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3"
-            >
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                  Sertifikat Kelulusan
-                </span>
-                <span className="font-mono text-slate-400 text-[10px]">
-                  {item.certificateNo}
-                </span>
-              </div>
-
-              <h3 className="text-sm font-bold text-slate-900 leading-snug">
-                {item.eventTitle}
-              </h3>
-
-              {/* Requirements Checklist */}
-              <div className="pt-2 border-t border-slate-100 space-y-2 text-xs">
-                <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 ${
-                  item.isCheckedIn 
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-slate-50 border-slate-200 text-slate-500"
-                }`}>
-                  {item.isCheckedIn ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                  )}
-                  <span className="font-medium">
-                    {item.isCheckedIn ? "Presensi Hadir (Tervalidasi Panitia)" : "Belum Check-In di Pintu Masuk"}
-                  </span>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3 animate-pulse"
+              >
+                <div className="flex justify-between">
+                  <div className="h-4 w-24 bg-slate-100 rounded"></div>
+                  <div className="h-4 w-32 bg-slate-100 rounded"></div>
                 </div>
-
-                <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 ${
-                  item.hasPostTest 
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : "bg-slate-50 border-slate-200 text-slate-500"
-                }`}>
-                  {item.hasPostTest ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
-                  )}
-                  <span className="font-medium">
-                    {item.hasPostTest 
-                      ? `Post-Test Selesai (Skor ${item.postTestScore}/100)`
-                      : "Belum Mengerjakan Post-Test"}
-                  </span>
+                <div className="h-5 w-3/4 bg-slate-100 rounded"></div>
+                <div className="space-y-2 pt-2 border-t border-slate-100">
+                  <div className="h-8 bg-slate-100 rounded-xl"></div>
+                  <div className="h-8 bg-slate-100 rounded-xl"></div>
                 </div>
+                <div className="h-10 bg-slate-100 rounded-xl"></div>
               </div>
-
-              {/* Action */}
-              <div className="pt-2">
-                {isEligible ? (
-                  <button
-                    onClick={() => handleDownloadPDF(item)}
-                    className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
-                  >
-                    <Download className="w-4 h-4" />
-                    <span>Unduh E-Sertifikat (.PDF)</span>
-                  </button>
-                ) : (
-                  <Link
-                    href={`/test/${item.eventId}`}
-                    className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200"
-                  >
-                    <FileText className="w-4 h-4 text-amber-600" />
-                    <span>Selesaikan Post-Test</span>
-                  </Link>
-                )}
-              </div>
+            ))}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="p-12 rounded-3xl bg-white border border-slate-200 text-center shadow-xs max-w-md mx-auto space-y-3">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto">
+              <Award className="w-7 h-7" />
             </div>
-          );
-        })}
-        </div>
+            <h3 className="text-base font-bold text-slate-900">Belum Ada Sertifikat Tersedia</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              Anda belum memiliki tiket kegiatan FTI. Silakan daftar ke acara kampus di halaman Kegiatan, ikuti sesi, dan selesaikan evaluasi untuk mendapatkan sertifikat.
+            </p>
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Jelajahi Kegiatan FTI</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item) => {
+              const isEligible = item.isCheckedIn && item.hasPostTest && (item.postTestScore ?? 0) >= 60;
+
+              return (
+                <div
+                  key={item.eventId}
+                  className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 transition-all"
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                        Sertifikat Kelulusan
+                      </span>
+                      <span className="font-mono text-slate-400 text-[10px]">
+                        {item.certificateNo}
+                      </span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-slate-900 leading-snug">
+                      {item.eventTitle}
+                    </h3>
+
+                    {/* Requirements Checklist */}
+                    <div className="pt-2 border-t border-slate-100 space-y-2 text-xs">
+                      {/* 1. Door Presensi */}
+                      <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 ${
+                        item.isCheckedIn 
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : "bg-slate-50 border-slate-200 text-slate-500"
+                      }`}>
+                        {item.isCheckedIn ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                        )}
+                        <span className="font-medium text-[11px]">
+                          {item.isCheckedIn ? "Presensi Hadir (Tervalidasi Panitia)" : "Belum Check-In di Pintu Masuk"}
+                        </span>
+                      </div>
+
+                      {/* 2. Post-Test Evaluation */}
+                      <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 ${
+                        item.hasPostTest && (item.postTestScore ?? 0) >= 60
+                          ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                          : item.hasPostTest
+                          ? "bg-red-50 border-red-200 text-red-800"
+                          : "bg-slate-50 border-slate-200 text-slate-500"
+                      }`}>
+                        {item.hasPostTest && (item.postTestScore ?? 0) >= 60 ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
+                        )}
+                        <span className="font-medium text-[11px]">
+                          {item.hasPostTest 
+                            ? `Post-Test Selesai (Skor ${item.postTestScore}/100)${(item.postTestScore ?? 0) < 60 ? " - Belum Memenuhi KKM" : ""}`
+                            : "Belum Mengerjakan Post-Test"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="pt-2">
+                    {isEligible ? (
+                      <button
+                        onClick={() => handleDownloadPDF(item)}
+                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Unduh E-Sertifikat (.PDF)</span>
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/test/${item.eventId}`}
+                        className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200"
+                      >
+                        <FileText className="w-4 h-4 text-amber-600" />
+                        <span>Selesaikan Post-Test</span>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
     </AppShell>
   );
