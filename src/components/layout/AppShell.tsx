@@ -5,12 +5,14 @@ import { DesktopNav } from "./DesktopNav";
 interface AppShellProps {
   children: ReactNode;
   showBottomNav?: boolean;
+  showDesktopNav?: boolean;
   maxWidth?: "default" | "narrow" | "full";
 }
 
 export function AppShell({ 
   children, 
   showBottomNav = true,
+  showDesktopNav = true,
   maxWidth = "default" 
 }: AppShellProps) {
   return (
@@ -21,7 +23,7 @@ export function AppShell({
         - Provides standard enterprise web navigation with role-specific tabs & fast switcher.
         - Hidden on mobile phones (md:hidden).
       */}
-      <DesktopNav />
+      {showDesktopNav && <DesktopNav />}
 
       {/* 
         2. Responsive Main Body Canvas:

@@ -188,7 +188,7 @@ export default function LoginPage() {
   };
 
   return (
-    <AppShell showBottomNav={false}>
+    <AppShell showDesktopNav={false} showBottomNav={false}>
       {/* Top Academic Bar */}
       <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
         <div className="flex items-center gap-2.5">

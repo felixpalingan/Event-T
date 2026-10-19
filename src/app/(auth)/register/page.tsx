@@ -114,7 +114,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AppShell showBottomNav={false}>
+    <AppShell showDesktopNav={false} showBottomNav={false}>
       {/* Top App Bar */}
       <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
         <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform flex items-center gap-1 text-xs">
