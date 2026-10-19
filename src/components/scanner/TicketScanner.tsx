@@ -10,18 +10,16 @@ import {
   AlertCircle, 
   ScanLine, 
   Volume2, 
-  VolumeX,
-  UserCheck,
-  Camera,
-  CameraOff,
-  Upload,
-  Keyboard,
-  Sparkles,
-  RefreshCw,
-  Clock,
-  Users,
-  ShieldAlert,
-  Loader2
+  VolumeX, 
+  UserCheck, 
+  Camera, 
+  CameraOff, 
+  Upload, 
+  Keyboard, 
+  Sparkles, 
+  RefreshCw, 
+  ShieldAlert, 
+  Loader2 
 } from "lucide-react";
 
 interface ScanResult {
@@ -69,6 +67,7 @@ export function TicketScanner() {
   const [selectedCameraId, setSelectedCameraId] = useState<string>("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const html5QrCodeRef = useRef<any>(null);
+  const readerElementRef = useRef<HTMLDivElement>(null);
 
   // Manual input state
   const [manualCode, setManualCode] = useState("");
@@ -91,7 +90,8 @@ export function TicketScanner() {
     fetchQuickTickets();
 
     return () => {
-      stopCamera();
+      // Safe cleanup on unmount
+      safeStopCamera();
     };
   }, []);
 
@@ -251,18 +251,45 @@ export function TicketScanner() {
     }
   };
 
-  // Start Camera Stream
+  // Safe Stop Camera
+  const safeStopCamera = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        const state = typeof html5QrCodeRef.current.getState === "function" 
+          ? html5QrCodeRef.current.getState() 
+          : 0;
+        // 2: SCANNING, 3: PAUSED
+        if (state === 2 || state === 3) {
+          await html5QrCodeRef.current.stop();
+        }
+        await html5QrCodeRef.current.clear();
+      } catch (err) {
+        console.warn("Ignored camera stop warning:", err);
+      }
+      html5QrCodeRef.current = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  // Start Camera Stream (Crash-Proof)
   const startCamera = async () => {
     setCameraLoading(true);
     setCameraError(null);
 
+    // 1. Check browser mediaDevices support
+    if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      setCameraError("Browser Anda tidak mendukung akses kamera atau koneksi tidak aman (harus HTTPS atau localhost).");
+      setCameraLoading(false);
+      return;
+    }
+
     try {
       const { Html5Qrcode } = await import("html5-qrcode");
 
-      // Stop existing instance if running
-      await stopCamera();
+      // 2. Stop any previous instance first
+      await safeStopCamera();
 
-      // Check available cameras
+      // 3. Check available devices
       try {
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length > 0) {
@@ -273,6 +300,13 @@ export function TicketScanner() {
         // Fallback to facingMode if getCameras fails
       }
 
+      // 4. Verify DOM element exists
+      const targetElement = document.getElementById("reader-viewport");
+      if (!targetElement) {
+        throw new Error("Elemen kamera tidak ditemukan di layar.");
+      }
+
+      // 5. Initialize instance on completely empty element
       const qrInstance = new Html5Qrcode("reader-viewport");
       html5QrCodeRef.current = qrInstance;
 
@@ -284,7 +318,11 @@ export function TicketScanner() {
         cameraConfig,
         {
           fps: 10,
-          qrbox: { width: 220, height: 220 },
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const qrboxSize = Math.max(160, Math.floor(minEdge * 0.7));
+            return { width: qrboxSize, height: qrboxSize };
+          },
           aspectRatio: 1.0,
         },
         (decodedText: string) => {
@@ -297,30 +335,19 @@ export function TicketScanner() {
 
       setIsCameraActive(true);
     } catch (err: unknown) {
+      console.error("Camera startup error:", err);
       const error = err as Error;
+      const isDenied = error?.name === "NotAllowedError" || error?.message?.toLowerCase().includes("permission");
       setCameraError(
-        error.message || "Tidak dapat mengakses kamera. Pastikan izin kamera telah diberikan di browser."
+        isDenied
+          ? "Izin akses kamera ditolak oleh browser. Buka izin kamera di ikon gembok pada URL browser Anda."
+          : error?.message || "Tidak dapat mengaktifkan kamera pada perangkat ini."
       );
       setIsCameraActive(false);
+      await safeStopCamera();
     } finally {
       setCameraLoading(false);
     }
-  };
-
-  // Stop Camera Stream
-  const stopCamera = async () => {
-    if (html5QrCodeRef.current) {
-      try {
-        if (html5QrCodeRef.current.isScanning) {
-          await html5QrCodeRef.current.stop();
-        }
-        await html5QrCodeRef.current.clear();
-      } catch {
-        // Ignored
-      }
-      html5QrCodeRef.current = null;
-    }
-    setIsCameraActive(false);
   };
 
   // File Upload Handler
@@ -343,7 +370,7 @@ export function TicketScanner() {
       setLastResult({
         success: false,
         code: "DECODE_ERROR",
-        message: error.message || "Gambar QR tidak terbaca. Pastikan gambar jelas dan tidak buram.",
+        message: error.message || "Gambar QR tidak terbaca. Pastikan foto QR terlihat jelas dan terang.",
       });
     } finally {
       setUploadLoading(false);
@@ -361,7 +388,7 @@ export function TicketScanner() {
 
   return (
     <AppShell>
-      {/* Hidden container for file scanning */}
+      {/* Hidden dedicated container for file scanning (Zero React Children) */}
       <div id="reader-hidden-file" className="hidden" />
 
       {/* Header */}
@@ -421,9 +448,9 @@ export function TicketScanner() {
         {/* Multi-Input Tabs */}
         <div className="w-full grid grid-cols-4 p-1 rounded-2xl bg-slate-100 border border-slate-200 text-xs">
           <button
+            type="button"
             onClick={() => {
               setActiveTab("CAMERA");
-              if (!isCameraActive) startCamera();
             }}
             className={`py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
               activeTab === "CAMERA"
@@ -436,9 +463,10 @@ export function TicketScanner() {
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("UPLOAD");
-              stopCamera();
+              safeStopCamera();
             }}
             className={`py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
               activeTab === "UPLOAD"
@@ -451,9 +479,10 @@ export function TicketScanner() {
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("MANUAL");
-              stopCamera();
+              safeStopCamera();
             }}
             className={`py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
               activeTab === "MANUAL"
@@ -466,9 +495,10 @@ export function TicketScanner() {
           </button>
 
           <button
+            type="button"
             onClick={() => {
               setActiveTab("SIMULATION");
-              stopCamera();
+              safeStopCamera();
               fetchQuickTickets();
             }}
             className={`py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all ${
@@ -486,18 +516,29 @@ export function TicketScanner() {
         {activeTab === "CAMERA" && (
           <div className="w-full flex flex-col items-center space-y-3">
             <div className="w-full max-w-sm rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm p-3 relative">
-              {/* Viewport Box */}
-              <div
-                id="reader-viewport"
-                className="w-full aspect-square rounded-2xl overflow-hidden bg-slate-900 relative flex items-center justify-center"
-              >
+              {/* Outer Viewport Container */}
+              <div className="w-full aspect-square rounded-2xl overflow-hidden bg-slate-900 relative">
+                {/* 
+                  CRITICAL ARCHITECTURE FIX:
+                  The `#reader-viewport` element is dedicated EXCLUSIVELY to Html5Qrcode.
+                  React NEVER renders any children inside this element.
+                  All overlays (loading, placeholder, laser brackets, processing) are siblings with `absolute inset-0`.
+                */}
+                <div
+                  id="reader-viewport"
+                  ref={readerElementRef}
+                  className="w-full h-full"
+                />
+
+                {/* Sibling Overlay 1: Inactive Placeholder */}
                 {!isCameraActive && !cameraLoading && (
-                  <div className="text-center p-6 space-y-3">
-                    <CameraOff className="w-10 h-10 text-slate-500 mx-auto" />
-                    <p className="text-xs text-slate-400 max-w-[200px]">
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-900">
+                    <CameraOff className="w-10 h-10 text-slate-500 mx-auto mb-2" />
+                    <p className="text-xs text-slate-400 max-w-[200px] mb-3">
                       Kamera sedang nonaktif. Tekan tombol di bawah untuk menyalakan pemindai.
                     </p>
                     <button
+                      type="button"
                       onClick={startCamera}
                       className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-95 transition-all inline-flex items-center gap-1.5"
                     >
@@ -507,18 +548,19 @@ export function TicketScanner() {
                   </div>
                 )}
 
+                {/* Sibling Overlay 2: Connecting Spinner */}
                 {cameraLoading && (
-                  <div className="text-center p-6 space-y-2">
-                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-900/95 backdrop-blur-xs">
+                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto mb-2" />
                     <span className="text-xs font-semibold text-slate-300">Menghubungkan Kamera...</span>
                   </div>
                 )}
 
-                {/* Laser animation when camera is running */}
+                {/* Sibling Overlay 3: Laser & Viewfinder Brackets (Only when camera active) */}
                 {isCameraActive && (
-                  <>
+                  <div className="absolute inset-0 pointer-events-none z-10">
                     {/* Viewfinder Target Bracket */}
-                    <div className="absolute inset-8 border-2 border-emerald-400/60 rounded-2xl pointer-events-none">
+                    <div className="absolute inset-8 border-2 border-emerald-400/50 rounded-2xl pointer-events-none">
                       <div className="absolute -top-1 -left-1 w-4 h-4 border-t-3 border-l-3 border-emerald-400" />
                       <div className="absolute -top-1 -right-1 w-4 h-4 border-t-3 border-r-3 border-emerald-400" />
                       <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-3 border-l-3 border-emerald-400" />
@@ -527,12 +569,12 @@ export function TicketScanner() {
 
                     {/* Laser Sweep */}
                     <div className="absolute inset-x-8 h-0.5 bg-emerald-400 shadow-[0_0_10px_#34d399] animate-laser pointer-events-none" />
-                  </>
+                  </div>
                 )}
 
-                {/* Processing Overlay */}
+                {/* Sibling Overlay 4: Processing State */}
                 {isProcessing && (
-                  <div className="absolute inset-0 bg-white/85 flex items-center justify-center backdrop-blur-xs z-10">
+                  <div className="absolute inset-0 bg-white/85 flex items-center justify-center backdrop-blur-xs z-20">
                     <div className="text-center">
                       <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                       <span className="text-xs font-bold text-emerald-800">Validasi Tiket Presensi...</span>
@@ -559,7 +601,7 @@ export function TicketScanner() {
                     value={selectedCameraId}
                     onChange={(e) => {
                       setSelectedCameraId(e.target.value);
-                      startCamera();
+                      if (isCameraActive) startCamera();
                     }}
                     className="flex-1 py-2 px-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700 font-medium outline-none"
                   >
@@ -573,7 +615,8 @@ export function TicketScanner() {
 
                 {isCameraActive ? (
                   <button
-                    onClick={stopCamera}
+                    type="button"
+                    onClick={safeStopCamera}
                     className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all"
                   >
                     <CameraOff className="w-3.5 h-3.5" />
@@ -581,6 +624,7 @@ export function TicketScanner() {
                   </button>
                 ) : (
                   <button
+                    type="button"
                     onClick={startCamera}
                     disabled={cameraLoading}
                     className="flex-1 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-xs"
@@ -693,6 +737,7 @@ export function TicketScanner() {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={fetchQuickTickets}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
                 title="Segarkan Tiket"
@@ -737,6 +782,7 @@ export function TicketScanner() {
                     </div>
 
                     <button
+                      type="button"
                       onClick={() => handleValidateCode(t.ticket_code)}
                       disabled={isProcessing}
                       className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shrink-0 active:scale-95 transition-all shadow-2xs"
@@ -805,6 +851,7 @@ export function TicketScanner() {
             )}
 
             <button
+              type="button"
               onClick={() => setLastResult(null)}
               className="mt-3 w-full py-2 rounded-xl bg-white hover:bg-slate-50 active:scale-98 text-xs font-semibold text-slate-800 border border-slate-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
             >
