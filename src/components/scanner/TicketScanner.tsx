@@ -203,8 +203,8 @@ export function TicketScanner() {
     setIsProcessing(false);
   };
 
-  // Start Cooldown Countdown
-  const startCooldown = (seconds: number) => {
+  // Start Cooldown Countdown (Supports fractional seconds e.g. 1.5s)
+  const startCooldown = (seconds: number = 1.5) => {
     if (cooldownIntervalRef.current) {
       clearInterval(cooldownIntervalRef.current);
     }
@@ -213,7 +213,8 @@ export function TicketScanner() {
 
     cooldownIntervalRef.current = setInterval(() => {
       setCooldownSeconds((prev) => {
-        if (prev <= 1) {
+        const next = Math.round((prev - 0.1) * 10) / 10;
+        if (next <= 0) {
           if (cooldownIntervalRef.current) {
             clearInterval(cooldownIntervalRef.current);
             cooldownIntervalRef.current = null;
@@ -222,9 +223,9 @@ export function TicketScanner() {
           setIsProcessing(false);
           return 0;
         }
-        return prev - 1;
+        return next;
       });
-    }, 1000);
+    }, 100);
   };
 
   // Process ticket code through Supabase RPC with Double-Scan Prevention
@@ -237,8 +238,8 @@ export function TicketScanner() {
     // 1. Synchronously prevent concurrent executions
     if (isProcessingRef.current) return;
 
-    // 2. Cooldown period: If ANY scan happened less than 2.5 seconds ago, ignore
-    if (now - lastScanTimeRef.current < 2500) return;
+    // 2. Cooldown period: If ANY scan happened less than 1.5 seconds ago, ignore
+    if (now - lastScanTimeRef.current < 1500) return;
 
     // 3. Same-ticket lockout: If this exact ticket was scanned less than 10 seconds ago, ignore completely!
     if (lastScannedCodeRef.current === cleanCode && now - lastScanTimeRef.current < 10000) {
@@ -262,7 +263,7 @@ export function TicketScanner() {
           code: "SERVER_ERROR",
           message: error.message || "Gagal memproses tiket di database.",
         });
-        startCooldown(2);
+        startCooldown(1.5);
       } else {
         const res = data as ScanResult;
         if (res.success) {
@@ -284,8 +285,8 @@ export function TicketScanner() {
             prev.map((q) => (q.ticket_code === cleanCode ? { ...q, is_checked_in: true } : q))
           );
           setLastResult(res);
-          // Jeda 3 detik setelah berhasil scan tiket agar tidak re-scan
-          startCooldown(3);
+          // Jeda 1.5 detik setelah berhasil scan tiket agar tidak re-scan
+          startCooldown(1.5);
         } else {
           playBeep("error");
           if (res.student) {
@@ -300,7 +301,7 @@ export function TicketScanner() {
             ]);
           }
           setLastResult(res);
-          startCooldown(2);
+          startCooldown(1.5);
         }
       }
     } catch (err: unknown) {
@@ -311,7 +312,7 @@ export function TicketScanner() {
         code: "CLIENT_ERROR",
         message: error.message || "Format kode QR tidak valid.",
       });
-      startCooldown(2);
+      startCooldown(1.5);
     }
   };
 
@@ -663,7 +664,7 @@ export function TicketScanner() {
                         </p>
                         <div className="flex items-center gap-2">
                           <span className="px-2.5 py-1 rounded-full bg-emerald-900/80 border border-emerald-400/40 text-[11px] font-mono font-bold text-emerald-300">
-                            Jeda: {cooldownSeconds}s
+                            Jeda: {cooldownSeconds.toFixed(1)}s
                           </span>
                           <button
                             type="button"
