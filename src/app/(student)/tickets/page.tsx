@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/client";
@@ -10,13 +11,14 @@ import {
   MapPin, 
   FileText, 
   Award, 
-  RefreshCw,
-  ArrowLeft,
-  Calendar,
-  QrCode,
-  Ticket,
-  WifiOff,
-  Lock
+  RefreshCw, 
+  ArrowLeft, 
+  Calendar, 
+  QrCode, 
+  Ticket, 
+  WifiOff, 
+  Lock,
+  Sparkles
 } from "lucide-react";
 
 interface TicketItem {
@@ -33,6 +35,9 @@ interface TicketItem {
     mode: string;
     event_start_at: string;
     is_post_test_open: boolean;
+    banner_image?: string | null;
+    category?: string;
+    slug?: string;
   };
 }
 
@@ -178,7 +183,10 @@ export default function MyTicketsPage() {
             venue,
             mode,
             event_start_at,
-            is_post_test_open
+            is_post_test_open,
+            banner_image,
+            category,
+            slug
           )
         `)
         .eq("user_id", user.id)
@@ -331,19 +339,31 @@ export default function MyTicketsPage() {
                   key={ticket.id}
                   className="rounded-3xl bg-white border border-slate-200 overflow-hidden shadow-xs relative flex flex-col justify-between"
                 >
-                  {/* Event Header Card */}
-                  <div className="p-4 bg-slate-50 border-b border-slate-200">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-blue-700 uppercase tracking-wide text-[10px] block">
-                        Pass Masuk Resmi
+                  {/* Event Poster Header Banner */}
+                  <div className="relative aspect-[21/8] w-full bg-slate-950 overflow-hidden">
+                    <Image
+                      src={ticket.event?.banner_image || "/posters/seminar-ai-cloud.jpg"}
+                      alt={ticket.event?.title || "Poster Acara"}
+                      fill
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/30" />
+                    <div className="absolute top-2.5 left-3 right-3 flex items-center justify-between">
+                      <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-600/90 text-white backdrop-blur-md">
+                        {ticket.event?.category?.replace("_", " ") || "EVENT RESMI"}
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase">
-                        Mode: {ticket.event?.mode}
+                      <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-black/60 text-emerald-300 border border-emerald-500/30 backdrop-blur-md">
+                        Mode {ticket.event?.mode}
                       </span>
                     </div>
-                    <h2 className="text-sm font-bold text-slate-900 leading-snug">
-                      {ticket.event?.title}
-                    </h2>
+                    <div className="absolute bottom-2.5 left-3 right-3 text-white">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-cyan-300 block">
+                        Boarding Pass Digital Sivitas FTI
+                      </span>
+                      <h2 className="text-xs sm:text-sm font-extrabold line-clamp-1 leading-tight">
+                        {ticket.event?.title}
+                      </h2>
+                    </div>
                   </div>
 
                   {/* QR Code Pass Body */}
