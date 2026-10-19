@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -39,6 +40,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} min-h-full flex flex-col selection:bg-blue-600 selection:text-white bg-slate-50`}>
         {children}
+        <Analytics />
         <script
           dangerouslySetInnerHTML={{
             __html: `
