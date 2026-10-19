@@ -48,7 +48,7 @@ export function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-      <div className="w-full max-w-md md:max-w-lg bg-slate-950/95 border-t border-slate-800/90 px-3 pt-2 pb-safe flex items-center justify-around pointer-events-auto shadow-2xl backdrop-blur-md">
+      <div className="w-full max-w-md md:max-w-lg bg-white/95 border-t border-slate-200/90 px-3 pt-2 pb-safe flex items-center justify-around pointer-events-auto shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive;
@@ -57,18 +57,18 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex-1 py-1.5 flex flex-col items-center justify-center gap-1 transition-transform active:scale-95 ${
+              className={`flex-1 py-1 flex flex-col items-center justify-center gap-1 transition-transform active:scale-95 ${
                 active
-                  ? "text-blue-500 font-bold"
-                  : "text-slate-400 hover:text-slate-200 font-medium"
+                  ? "text-blue-600 font-bold"
+                  : "text-slate-400 hover:text-slate-700 font-medium"
               }`}
             >
               <div className={`relative p-1 rounded-xl transition-colors ${
-                active ? "bg-blue-600/15" : "bg-transparent"
+                active ? "bg-blue-50 text-blue-600" : "bg-transparent text-slate-400"
               }`}>
-                <Icon className={`w-5 h-5 ${active ? "text-blue-500 stroke-[2.4]" : "text-slate-400 stroke-[1.8]"}`} />
+                <Icon className={`w-5 h-5 ${active ? "text-blue-600 stroke-[2.4]" : "stroke-[1.8]"}`} />
               </div>
-              <span className={`text-[10px] tracking-tight leading-none ${active ? "text-blue-400 font-bold" : "text-slate-400"}`}>
+              <span className={`text-[10px] tracking-tight leading-none ${active ? "text-blue-600 font-bold" : "text-slate-500"}`}>
                 {item.label}
               </span>
             </Link>

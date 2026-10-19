@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #090d16;
-  --foreground: #f8fafc;
-  --surface: #0f172a;
-  --surface-border: #1e293b;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --surface: #ffffff;
+  --surface-border: #e2e8f0;
   --brand-blue: #1d4ed8;
-  --brand-blue-hover: #2563eb;
+  --brand-blue-hover: #1e40af;
   --accent-gold: #d97706;
   --success-emerald: #059669;
 }
@@ -21,7 +21,7 @@ body {
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* Custom crisp scrollbar for mobile feel */
+/* Custom crisp scrollbar for light theme */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -32,12 +32,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
 }
 
 /* Hide scrollbar utility for horizontal tabs */
@@ -93,4 +93,5 @@ body {
 .animate-status-pulse {
   animation: status-pulse 1.8s ease-in-out infinite;
 }
+
 

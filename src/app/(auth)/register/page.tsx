@@ -10,7 +10,6 @@ import {
   ArrowLeft, 
   User, 
   Mail, 
-  Lock, 
   Phone, 
   BookOpen, 
   AlertCircle, 
@@ -101,18 +100,18 @@ export default function RegisterPage() {
   return (
     <AppShell showBottomNav={false}>
       {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-slate-950/95 border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
-        <Link href="/" className="text-slate-400 hover:text-white p-1 -ml-1 active:scale-95 transition-transform flex items-center gap-1 text-xs">
+      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
+        <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform flex items-center gap-1 text-xs">
           <ArrowLeft className="w-5 h-5" />
           <span>Beranda</span>
         </Link>
-        <span className="text-xs font-semibold text-slate-400">Pendaftaran Akun</span>
+        <span className="text-xs font-semibold text-slate-500">Pendaftaran Akun</span>
       </header>
 
       {/* Main Content */}
       <main className="flex-1 px-4 py-6">
         <div className="flex items-center gap-3 mb-6 px-1">
-          <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-md border border-slate-200 shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-xs border border-slate-200 shrink-0">
             <Image
               src="/logo.png"
               alt="Logo Universitas Trisakti"
@@ -122,23 +121,23 @@ export default function RegisterPage() {
             />
           </div>
           <div>
-            <h1 className="text-base font-bold text-white tracking-tight">
+            <h1 className="text-base font-bold text-slate-900 tracking-tight">
               Registrasi Mahasiswa
             </h1>
-            <p className="text-[11px] text-slate-400">FTI Event!t — Akun Kegiatan Kampus</p>
+            <p className="text-[11px] text-slate-500">FTI Event!t — Akun Kegiatan Kampus</p>
           </div>
         </div>
 
-        <div className="bg-slate-950 border border-slate-800 p-5 rounded-3xl shadow-xl">
+        <div className="bg-white border border-slate-200 p-5 rounded-3xl shadow-xs">
           {errorMsg && (
-            <div className="mb-4 p-3 rounded-xl bg-red-950/60 border border-red-500/40 flex items-start gap-2.5 text-red-300 text-xs">
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-red-700 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-start gap-2.5 text-emerald-300 text-xs">
+            <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5 text-emerald-800 text-xs">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
               <span>Registrasi berhasil! Mengalihkan ke katalog event...</span>
             </div>
@@ -147,11 +146,11 @@ export default function RegisterPage() {
           <form className="space-y-3.5" onSubmit={handleRegister}>
             {/* Nama Lengkap */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Nama Lengkap
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <User className="w-4 h-4" />
                 </div>
                 <input
@@ -160,7 +159,7 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Nama Lengkap Sesuai KTM"
-                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -168,7 +167,7 @@ export default function RegisterPage() {
             {/* NIM & Angkatan */}
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   NIM / NIDN
                 </label>
                 <input
@@ -177,18 +176,18 @@ export default function RegisterPage() {
                   value={nim}
                   onChange={(e) => setNim(e.target.value)}
                   placeholder="065002100012"
-                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors uppercase font-mono"
+                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors uppercase font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Angkatan
                 </label>
                 <select
                   value={angkatan}
                   onChange={(e) => setAngkatan(Number(e.target.value))}
-                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                 >
                   {ANGKATAN_OPTIONS.map((year) => (
                     <option key={year} value={year}>
@@ -201,17 +200,17 @@ export default function RegisterPage() {
 
             {/* Program Studi */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Program Studi
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <BookOpen className="w-4 h-4" />
                 </div>
                 <select
                   value={prodi}
                   onChange={(e) => setProdi(e.target.value)}
-                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                 >
                   {PRODI_OPTIONS.map((p) => (
                     <option key={p} value={p}>
@@ -224,11 +223,11 @@ export default function RegisterPage() {
 
             {/* No. WhatsApp & Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 No. WhatsApp (Aktif)
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Phone className="w-4 h-4" />
                 </div>
                 <input
@@ -237,17 +236,17 @@ export default function RegisterPage() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="081234567890"
-                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                 Email
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -256,7 +255,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="mahasiswa@std.trisakti.ac.id"
-                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -264,7 +263,7 @@ export default function RegisterPage() {
             {/* Password & Confirm */}
             <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Kata Sandi
                 </label>
                 <div className="relative">
@@ -274,12 +273,12 @@ export default function RegisterPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                    className="block w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Ulangi Sandi
                 </label>
                 <input
@@ -288,7 +287,7 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-xs focus:bg-white focus:border-blue-600 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -296,7 +295,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading || successMsg}
-              className="w-full mt-3 py-3 px-4 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-[0.98] text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full mt-3 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading ? (
                 <>
@@ -312,9 +311,9 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <div className="mt-5 text-center text-xs text-slate-400">
+          <div className="mt-5 text-center text-xs text-slate-500">
             Sudah memiliki akun?{" "}
-            <Link href="/login" className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-4">
+            <Link href="/login" className="text-blue-600 hover:text-blue-700 font-semibold underline underline-offset-4">
               Masuk di sini
             </Link>
           </div>

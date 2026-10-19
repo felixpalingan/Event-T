@@ -177,38 +177,38 @@ export default function EventsPage() {
   return (
     <AppShell>
       {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-slate-950/95 border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
+      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
         <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-slate-400 hover:text-white p-1 -ml-1 active:scale-95 transition-transform">
+          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold text-white tracking-tight">Katalog Kegiatan FTI</h1>
+          <h1 className="text-sm font-bold text-slate-900 tracking-tight">Katalog Kegiatan FTI</h1>
         </div>
 
         <Link 
           href="/tickets" 
-          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-900/30 text-blue-300 border border-blue-500/40 flex items-center gap-1.5 active:scale-95 transition-all"
+          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5 active:scale-95 transition-all"
         >
           <QrCode className="w-3.5 h-3.5" />
           <span>Tiket</span>
         </Link>
       </header>
 
-      {/* Search Input Bar (Touch Ergonomic) */}
+      {/* Search Input Bar */}
       <div className="px-4 pt-3 pb-1">
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Cari seminar, workshop, lab..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-sm text-slate-100 placeholder:text-slate-500 focus:border-blue-500 outline-none transition-colors"
+            className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 outline-none transition-colors"
           />
           {search && (
             <button
               onClick={() => setSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
             >
               <X className="w-4 h-4" />
             </button>
@@ -224,8 +224,8 @@ export default function EventsPage() {
             onClick={() => setSelectedCategory(cat)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap active:scale-95 transition-all ${
               selectedCategory === cat
-                ? "bg-blue-700 text-white shadow-sm"
-                : "bg-slate-900 text-slate-400 hover:text-white border border-slate-800"
+                ? "bg-blue-600 text-white shadow-xs"
+                : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200"
             }`}
           >
             {cat === "SEMINAR" ? "Seminar" :
@@ -238,8 +238,8 @@ export default function EventsPage() {
 
       {/* Feedback Banner */}
       {message && (
-        <div className="mx-4 mt-2 p-3 rounded-xl flex items-center gap-2.5 text-xs font-medium bg-slate-900 border border-slate-800 text-slate-200">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+        <div className="mx-4 mt-2 p-3 rounded-xl flex items-center gap-2.5 text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{message.text}</span>
         </div>
       )}
@@ -253,32 +253,32 @@ export default function EventsPage() {
           return (
             <div
               key={event.id}
-              className="p-4 rounded-2xl bg-slate-950 border border-slate-800/90 shadow-md space-y-3"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3"
             >
-              {/* Meta Header */}
+              {/* Meta Header without SKPI */}
               <div className="flex items-center justify-between text-[11px]">
-                <span className="font-bold text-blue-400 uppercase tracking-wide">
+                <span className="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200 uppercase tracking-wide">
                   {event.category.replace("_", " ")}
                 </span>
-                <span className="font-semibold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
-                  +{event.skpi_points} Poin SKPI
+                <span className="font-medium text-slate-500">
+                  Mode: {event.mode}
                 </span>
               </div>
 
               {/* Title & Description */}
               <div>
-                <h3 className="text-sm font-bold text-white leading-snug">
+                <h3 className="text-sm font-bold text-slate-900 leading-snug">
                   {event.title}
                 </h3>
-                <p className="text-xs text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
+                <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
                   {event.description}
                 </p>
               </div>
 
               {/* Venue & Time */}
-              <div className="pt-2.5 border-t border-slate-800/80 space-y-1.5 text-xs text-slate-400">
+              <div className="pt-2.5 border-t border-slate-100 space-y-1.5 text-xs text-slate-600">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   <span>
                     {eventDate.toLocaleDateString("id-ID", {
                       weekday: "short",
@@ -289,26 +289,26 @@ export default function EventsPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="truncate">{event.venue} ({event.mode})</span>
+                  <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <span className="truncate">{event.venue}</span>
                 </div>
               </div>
 
               {/* Actions & Claim */}
               <div className="pt-2 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
                     {event.price === 0 ? "GRATIS" : `Rp ${event.price.toLocaleString("id-ID")}`}
                   </span>
                   <span className="text-[11px] text-slate-500">
-                    Kuota: {event.quota}
+                    Sisa Kuota: {event.quota}
                   </span>
                 </div>
 
                 {isClaimed ? (
                   <Link
                     href="/tickets"
-                    className="px-3.5 py-2 rounded-xl bg-emerald-600/15 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
+                    className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Tiket Anda</span>
@@ -317,7 +317,7 @@ export default function EventsPage() {
                   <button
                     onClick={() => handleClaimTicket(event.id)}
                     disabled={claimingId === event.id}
-                    className="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-60 flex items-center gap-1.5 shadow-sm"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition-all disabled:opacity-60 flex items-center gap-1.5 shadow-xs"
                   >
                     {claimingId === event.id ? (
                       <>
@@ -325,7 +325,7 @@ export default function EventsPage() {
                         <span>Mendaftarkan...</span>
                       </>
                     ) : (
-                      <span>Klaim 1-Klik</span>
+                      <span>Klaim Tiket</span>
                     )}
                   </button>
                 )}
