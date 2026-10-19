@@ -40,6 +40,13 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  // 0. Demo redirect: Opening website root / goes directly to /login
+  if (pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
+  }
+
   // 1. Protection for Admin Routes (/admin/*)
   if (pathname.startsWith('/admin')) {
     if (!user) {

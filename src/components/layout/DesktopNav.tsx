@@ -79,31 +79,30 @@ export function DesktopNav() {
   const getNavLinks = () => {
     if (role === "ADMIN") {
       return [
-        { href: "/", label: "Beranda", icon: Calendar, isActive: pathname === "/" },
         { href: "/admin", label: "Dashboard", icon: LayoutDashboard, isActive: pathname === "/admin" },
         { href: "/admin/events", label: "Kelola Event", icon: Calendar, isActive: pathname.startsWith("/admin/events") },
         { href: "/panitia/scanner", label: "Scanner QR", icon: ScanLine, isActive: pathname.startsWith("/panitia/scanner") || pathname === "/scanner" },
         { href: "/panitia/attendees", label: "Daftar Hadir", icon: Users, isActive: pathname.startsWith("/panitia/attendees") },
         { href: "/admin/reports", label: "Laporan & Rekap", icon: FileSpreadsheet, isActive: pathname.startsWith("/admin/reports") },
-        { href: "/panitia/control", label: "Kontrol Sesi", icon: Settings2, isActive: pathname.startsWith("/panitia/control") },
+        { href: "/home", label: "Overview", icon: Calendar, isActive: pathname === "/home" },
       ];
     }
 
     if (role === "PANITIA") {
       return [
-        { href: "/", label: "Beranda", icon: Calendar, isActive: pathname === "/" },
         { href: "/panitia/scanner", label: "Scanner Pintu", icon: ScanLine, isActive: pathname.startsWith("/panitia/scanner") || pathname === "/scanner" },
         { href: "/panitia/attendees", label: "Presensi Peserta", icon: Users, isActive: pathname.startsWith("/panitia/attendees") },
         { href: "/panitia/control", label: "Kontrol Gate & Test", icon: Settings2, isActive: pathname.startsWith("/panitia/control") },
+        { href: "/events", label: "Katalog Acara", icon: Calendar, isActive: pathname.startsWith("/events") },
       ];
     }
 
     // Default: MAHASISWA (Peserta)
     return [
-      { href: "/", label: "Beranda", icon: Calendar, isActive: pathname === "/" },
-      { href: "/events", label: "Jelajah Event", icon: Ticket, isActive: pathname.startsWith("/events") },
+      { href: "/events", label: "Jelajah Event", icon: Calendar, isActive: pathname.startsWith("/events") },
       { href: "/tickets", label: "Tiket Saya", icon: QrCode, isActive: pathname.startsWith("/tickets") },
       { href: "/certificates", label: "E-Sertifikat", icon: Award, isActive: pathname.startsWith("/certificates") },
+      { href: "/home", label: "Overview", icon: LayoutDashboard, isActive: pathname === "/home" },
     ];
   };
 
@@ -114,7 +113,7 @@ export function DesktopNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Brand & Campus Identity */}
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-3 active:scale-98 transition-transform">
+          <Link href={role === "ADMIN" ? "/admin" : role === "PANITIA" ? "/panitia/scanner" : "/events"} className="flex items-center gap-3 active:scale-98 transition-transform">
             <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 p-1 flex items-center justify-center shadow-xs">
               <Image 
                 src="/logo.png" 
@@ -199,6 +198,16 @@ export function DesktopNav() {
               {userName.charAt(0).toUpperCase()}
             </div>
             <span className="truncate max-w-[100px]">{userName.split(" ")[0]}</span>
+          </Link>
+
+          {/* Quick Demo Account Switcher Button */}
+          <Link
+            href="/login"
+            className="px-2.5 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-2xs"
+            title="Pilih akun cepat untuk berganti peran demo"
+          >
+            <User className="w-3.5 h-3.5 text-blue-600" />
+            <span>Ganti Akun</span>
           </Link>
 
           {/* Quick Logout Button */}

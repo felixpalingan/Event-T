@@ -71,12 +71,6 @@ export function BottomNav() {
     if (role === "ADMIN") {
       return [
         {
-          href: "/",
-          label: "Beranda",
-          icon: Calendar,
-          isActive: pathname === "/",
-        },
-        {
           href: "/admin",
           label: "Dashboard",
           icon: LayoutDashboard,
@@ -87,6 +81,12 @@ export function BottomNav() {
           label: "Acara",
           icon: Calendar,
           isActive: pathname.startsWith("/admin/events"),
+        },
+        {
+          href: "/panitia/scanner",
+          label: "Scanner QR",
+          icon: ScanLine,
+          isActive: pathname.startsWith("/panitia/scanner"),
         },
         {
           href: "/admin/reports",
@@ -106,14 +106,8 @@ export function BottomNav() {
     if (role === "PANITIA") {
       return [
         {
-          href: "/",
-          label: "Beranda",
-          icon: Calendar,
-          isActive: pathname === "/",
-        },
-        {
           href: "/panitia/scanner",
-          label: "Scanner Pintu",
+          label: "Scanner",
           icon: ScanLine,
           isActive: pathname.startsWith("/panitia/scanner") || pathname === "/scanner",
         },
@@ -130,6 +124,12 @@ export function BottomNav() {
           isActive: pathname.startsWith("/panitia/control"),
         },
         {
+          href: "/events",
+          label: "Acara",
+          icon: Calendar,
+          isActive: pathname.startsWith("/events"),
+        },
+        {
           href: "/profile",
           label: "Akun",
           icon: User,
@@ -141,15 +141,9 @@ export function BottomNav() {
     // Default: MAHASISWA (Peserta)
     return [
       {
-        href: "/",
-        label: "Beranda",
-        icon: Calendar,
-        isActive: pathname === "/",
-      },
-      {
         href: "/events",
-        label: "Event",
-        icon: Ticket,
+        label: "Jelajah",
+        icon: Calendar,
         isActive: pathname.startsWith("/events"),
       },
       {
@@ -166,9 +160,15 @@ export function BottomNav() {
       },
       {
         href: "/profile",
-        label: "Akun",
+        label: "Profil",
         icon: User,
         isActive: pathname.startsWith("/profile"),
+      },
+      {
+        href: "/login",
+        label: "Ganti Akun",
+        icon: User,
+        isActive: pathname === "/login",
       },
     ];
   };
