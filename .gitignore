@@ -54,7 +54,9 @@ agent.txt
 AI_HANDOVER_*.md
 *REQUIREMENT*.md
 
-# Legacy Notes / Analysis files
-fitur flask.md
-fitur flutter.md
-fitur gabungan.md
+# AI Docs, Design System & Analysis files (DO NOT COMMIT)
+fti_eventit_master_design_system.md
+*_master_design_system.md
+*.ai.md
+*AUDIT*.md
+*PLAN*.md
