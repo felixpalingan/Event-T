@@ -1,191 +1,203 @@
 import Link from "next/link";
 import Image from "next/image";
+import { AppShell } from "@/components/layout/AppShell";
 import { 
   Calendar, 
   QrCode, 
-  Award, 
-  Smartphone, 
-  CheckCircle2, 
-  ArrowRight,
-  Sparkles,
-  Users,
+  MapPin, 
+  Clock, 
+  ScanLine,
+  User,
+  ChevronRight,
   ShieldCheck,
-  ScanLine
+  CheckCircle2
 } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Navbar */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-slate-950/80 border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="relative w-9 h-9 rounded-lg bg-white p-1 flex items-center justify-center shadow-md">
-              <Image 
-                src="/logo.png" 
-                alt="Logo Trisakti" 
-                width={32} 
-                height={32} 
-                className="object-contain" 
-              />
-            </div>
-            <div>
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                FTI Event!t
-              </span>
-              <span className="block text-[10px] text-slate-400 uppercase tracking-widest font-medium">
-                Fakultas Teknologi Informasi
-              </span>
-            </div>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-            <Link href="/events" className="hover:text-blue-400 transition-colors">Katalog Event</Link>
-            <Link href="/tickets" className="hover:text-blue-400 transition-colors">Tiket Saya</Link>
-            <Link href="/scanner" className="hover:text-blue-400 transition-colors flex items-center gap-1.5 text-emerald-400">
-              <ScanLine className="w-4 h-4" /> Mode Panitia
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="text-xs md:text-sm font-semibold px-4 py-2 rounded-full border border-slate-700 hover:border-slate-500 hover:bg-slate-900 transition-all"
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/register"
-              className="text-xs md:text-sm font-semibold px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition-all"
-            >
-              Daftar Mahasiswa
-            </Link>
+    <AppShell>
+      {/* Top App Bar */}
+      <header className="sticky top-0 z-40 bg-slate-950/95 border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-white p-1 flex items-center justify-center shrink-0 shadow-sm border border-slate-200">
+            <Image 
+              src="/logo.png" 
+              alt="Logo Universitas Trisakti" 
+              width={28} 
+              height={28} 
+              className="object-contain" 
+            />
           </div>
+          <div>
+            <span className="block font-bold text-sm tracking-tight text-white leading-tight">
+              FTI Event!t
+            </span>
+            <span className="block text-[11px] text-slate-400 font-medium leading-tight">
+              Universitas Trisakti
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link
+            href="/login"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 active:scale-95 transition-all flex items-center gap-1.5 border border-slate-700/60"
+          >
+            <User className="w-3.5 h-3.5 text-blue-400" />
+            <span>Masuk</span>
+          </Link>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <main className="flex-1 max-w-6xl mx-auto px-4 py-12 md:py-20 flex flex-col items-center text-center">
-        {/* Campus Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs md:text-sm font-medium mb-6">
-          <Sparkles className="w-4 h-4" />
-          <span>Platform Resmi Kegiatan & Seminar Mahasiswa FTI</span>
-        </div>
-
-        {/* Headline */}
-        <h1 className="text-3xl md:text-6xl font-extrabold tracking-tight max-w-4xl leading-tight">
-          Satu Aplikasi untuk Seluruh{" "}
-          <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-sky-400 bg-clip-text text-transparent">
-            Event, Seminar & Workshop
-          </span>{" "}
-          Kampus
-        </h1>
-
-        <p className="mt-5 text-sm md:text-lg text-slate-400 max-w-2xl leading-relaxed">
-          Klaim tiket 1-klik, akses QR tiket secara <strong>offline</strong> di aula kampus, 
-          kerjakan evaluasi pre/post-test langsung di ponsel, dan unduh E-Sertifikat ber-SKPI otomatis.
-        </p>
-
-        {/* CTA Buttons */}
-        <div className="mt-8 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
-          <Link
-            href="/events"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-xl shadow-blue-600/25 transition-all"
-          >
-            <span>Jelajahi Event FTI</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+      {/* Main Content Feed */}
+      <main className="flex-1 px-4 py-4 space-y-5">
+        
+        {/* Quick Utility Actions Bar (Mobile Touch Friendly) */}
+        <section className="grid grid-cols-2 gap-2.5">
           <Link
             href="/tickets"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-medium text-sm transition-all"
+            className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-blue-500/50 active:scale-[0.98] transition-all flex items-center gap-3 shadow-sm"
           >
-            <QrCode className="w-4 h-4 text-blue-400" />
-            <span>Buka Tiket Saya (Offline)</span>
+            <div className="w-10 h-10 rounded-xl bg-blue-700 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <span className="block text-xs font-bold text-white truncate">Tiket Saya</span>
+              <span className="block text-[10px] text-blue-300">Akses QR Offline</span>
+            </div>
           </Link>
-        </div>
 
-        {/* Key Features Grid */}
-        <section className="mt-16 md:mt-24 w-full grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-          {/* Card 1 */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-blue-500/40 transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-4 group-hover:scale-105 transition-transform">
-              <QrCode className="w-6 h-6" />
+          <Link
+            href="/scanner"
+            className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 hover:border-emerald-500/50 active:scale-[0.98] transition-all flex items-center gap-3 shadow-sm"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-sm">
+              <ScanLine className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">Tiket QR Anti-Macet</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Tiket tersimpan di memori perangkat melalui Service Worker. Tetap bisa discan panitia meski sinyal internet di auditorium mati total.
-            </p>
+            <div className="min-w-0">
+              <span className="block text-xs font-bold text-white truncate">Scanner Panitia</span>
+              <span className="block text-[10px] text-emerald-300">Presensi Pintu</span>
+            </div>
+          </Link>
+        </section>
+
+        {/* Featured Campus Event Card */}
+        <section className="rounded-3xl bg-slate-950 border border-slate-800 p-5 shadow-lg relative overflow-hidden">
+          <div className="flex items-center justify-between mb-3">
+            <span className="px-2.5 py-1 rounded-md bg-blue-700 text-white text-[10px] font-bold tracking-wide uppercase">
+              Kuliah Umum
+            </span>
+            <span className="text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+              +15 Poin SKPI
+            </span>
           </div>
 
-          {/* Card 2 */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-indigo-500/40 transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4 group-hover:scale-105 transition-transform">
-              <Award className="w-6 h-6" />
+          <h2 className="text-base font-bold text-white leading-snug">
+            AI Engineering &amp; Modern Cloud Architecture at Scale
+          </h2>
+          <p className="text-xs text-slate-400 mt-2 line-clamp-2 leading-relaxed">
+            Kuliah tamu bersama praktisi industri teknologi membahas deployment model AI terdistribusi dan arsitektur serverless.
+          </p>
+
+          <div className="mt-4 pt-3 border-t border-slate-800 space-y-1.5 text-xs text-slate-300">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span>Kamis, 24 Oktober 2026 • 09:00 WIB</span>
             </div>
-            <h3 className="text-lg font-bold text-white mb-2">E-Sertifikat & Poin SKPI</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Otomatis terbit setelah mahasiswa hadir dan menyelesaikan evaluasi post-test. Lengkap dengan nomor lisensi dan barcode verifikasi keaslian.
-            </p>
+            <div className="flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+              <span>Auditorium FTI Lt. 8, Gedung H Kampus A</span>
+            </div>
           </div>
 
-          {/* Card 3 */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-emerald-500/40 transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 group-hover:scale-105 transition-transform">
-              <ScanLine className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-white mb-2">Scanner Kamera Terpadu</h3>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Panitia tidak perlu install aplikasi tambahan. Buka kamera scanner langsung di browser smartphone atau laptop dengan respon instan &lt;150ms.
-            </p>
+          <div className="mt-5 flex items-center gap-2">
+            <Link
+              href="/events"
+              className="flex-1 py-2.5 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-[0.98] text-white text-xs font-bold text-center transition-all shadow-sm flex items-center justify-center gap-1.5"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Klaim Tiket Gratis</span>
+            </Link>
+            <Link
+              href="/events"
+              className="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 text-xs font-semibold transition-all border border-slate-700/60"
+            >
+              Detail
+            </Link>
           </div>
         </section>
 
-        {/* PWA Benefits Banner */}
-        <div className="mt-12 w-full p-6 md:p-8 rounded-3xl bg-gradient-to-r from-blue-950/40 via-indigo-950/30 to-slate-900/50 border border-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-6 text-left">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
-              <Smartphone className="w-7 h-7" />
-            </div>
-            <div>
-              <h4 className="text-base md:text-lg font-bold text-white">Dapat Di-install di iPhone &amp; Android (PWA)</h4>
-              <p className="text-xs md:text-sm text-slate-400 mt-1">
-                Buka di Safari (iOS) atau Chrome (Android) lalu pilih <strong>&quot;Add to Home Screen&quot;</strong> untuk sensasi aplikasi native tanpa download Play Store.
-              </p>
-            </div>
+        {/* Agenda Acara FTI (Feed List) */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              Agenda Terdekat FTI
+            </h3>
+            <Link href="/events" className="text-xs font-medium text-blue-400 hover:text-blue-300 flex items-center gap-0.5">
+              <span>Lihat Semua</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
+
+          {/* Event Item 1 */}
           <Link
             href="/events"
-            className="shrink-0 px-6 py-3 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs md:text-sm font-semibold transition-all shadow-md"
+            className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-[0.99] transition-all flex items-center justify-between gap-3 block"
           >
-            Mulai Sekarang
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center shrink-0 text-center">
+                <span className="text-[9px] uppercase font-bold text-blue-400 leading-none">OKT</span>
+                <span className="text-sm font-extrabold text-white leading-none mt-1">26</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wide">Workshop Hands-On</span>
+                <h4 className="text-xs font-bold text-white truncate">Fullstack Next.js &amp; PostgreSQL</h4>
+                <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                  <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+                  <span>Lab Komputer 3 • Kuota 50</span>
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              GRATIS
+            </span>
           </Link>
-        </div>
+
+          {/* Event Item 2 */}
+          <Link
+            href="/events"
+            className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 hover:border-slate-700 active:scale-[0.99] transition-all flex items-center justify-between gap-3 block"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-11 h-11 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center shrink-0 text-center">
+                <span className="text-[9px] uppercase font-bold text-indigo-400 leading-none">NOV</span>
+                <span className="text-sm font-extrabold text-white leading-none mt-1">02</span>
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wide">Kompetisi Mahasiswa</span>
+                <h4 className="text-xs font-bold text-white truncate">Trisakti Tech Hackathon 2026</h4>
+                <p className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                  <Clock className="w-3 h-3 text-slate-500 shrink-0" />
+                  <span>Hall Syarif Thajib Kampus A</span>
+                </p>
+              </div>
+            </div>
+            <span className="text-[11px] font-bold text-emerald-400 shrink-0 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              GRATIS
+            </span>
+          </Link>
+        </section>
+
+        {/* Practical Mode B Requirements Callout */}
+        <section className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 flex items-start gap-3">
+          <ShieldCheck className="w-5 h-5 text-blue-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-slate-400 leading-relaxed">
+            <strong className="text-slate-200 block mb-0.5 font-semibold">Integritas Sertifikasi Mode B</strong>
+            E-Sertifikat dan angka kredit SKPI diterbitkan secara otomatis setelah kehadiran Anda divalidasi panitia di pintu masuk dan post-test telah selesai dikerjakan.
+          </div>
+        </section>
+
       </main>
-
-      {/* Mobile Sticky Bottom Navigation (PWA Style) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur-lg border-t border-slate-800 px-6 py-2.5 flex items-center justify-around text-xs">
-        <Link href="/" className="flex flex-col items-center gap-1 text-blue-400 font-semibold">
-          <Calendar className="w-5 h-5" />
-          <span>Beranda</span>
-        </Link>
-        <Link href="/events" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
-          <Users className="w-5 h-5" />
-          <span>Event</span>
-        </Link>
-        <Link href="/tickets" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
-          <QrCode className="w-5 h-5" />
-          <span>Tiket</span>
-        </Link>
-        <Link href="/scanner" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
-          <ScanLine className="w-5 h-5" />
-          <span>Scanner</span>
-        </Link>
-      </div>
-
-      {/* Footer */}
-      <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500 pb-20 md:pb-6">
-        <p>&copy; 2026 FTI Event!t — Fakultas Teknologi Informasi Universitas Trisakti. All rights reserved.</p>
-      </footer>
-    </div>
+    </AppShell>
   );
 }

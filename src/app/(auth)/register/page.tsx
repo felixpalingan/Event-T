@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import { 
   ArrowLeft, 
@@ -12,10 +13,10 @@ import {
   Lock, 
   Phone, 
   BookOpen, 
-  Calendar, 
   AlertCircle, 
   Loader2,
-  CheckCircle2 
+  CheckCircle2,
+  UserPlus
 } from "lucide-react";
 
 const PRODI_OPTIONS = [
@@ -92,61 +93,61 @@ export default function RegisterPage() {
       }
     } catch (err: unknown) {
       const error = err as Error;
-      setErrorMsg(error?.message || "Terjadi kesalahan server.");
+      setErrorMsg(error?.message || "Terjadi kesalahan koneksi server.");
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8 px-4">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Beranda</span>
+    <AppShell showBottomNav={false}>
+      {/* Top App Bar */}
+      <header className="sticky top-0 z-40 bg-slate-950/95 border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
+        <Link href="/" className="text-slate-400 hover:text-white p-1 -ml-1 active:scale-95 transition-transform flex items-center gap-1 text-xs">
+          <ArrowLeft className="w-5 h-5" />
+          <span>Beranda</span>
         </Link>
+        <span className="text-xs font-semibold text-slate-400">Pendaftaran Akun</span>
+      </header>
 
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg">
+      {/* Main Content */}
+      <main className="flex-1 px-4 py-6">
+        <div className="flex items-center gap-3 mb-6 px-1">
+          <div className="w-11 h-11 rounded-2xl bg-white p-1.5 flex items-center justify-center shadow-md border border-slate-200 shrink-0">
             <Image
               src="/logo.png"
-              alt="Logo Trisakti"
-              width={40}
-              height={40}
+              alt="Logo Universitas Trisakti"
+              width={34}
+              height={34}
               className="object-contain"
             />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
-              Daftar Mahasiswa
+            <h1 className="text-base font-bold text-white tracking-tight">
+              Registrasi Mahasiswa
             </h1>
-            <p className="text-xs text-slate-400">FTI Event!t — Akun Kegiatan Kampus</p>
+            <p className="text-[11px] text-slate-400">FTI Event!t — Akun Kegiatan Kampus</p>
           </div>
         </div>
-      </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-900/90 border border-slate-800 py-8 px-6 shadow-2xl rounded-3xl sm:px-10 backdrop-blur-md">
+        <div className="bg-slate-950 border border-slate-800 p-5 rounded-3xl shadow-xl">
           {errorMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-400 text-xs">
+            <div className="mb-4 p-3 rounded-xl bg-red-950/60 border border-red-500/40 flex items-start gap-2.5 text-red-300 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
           )}
 
           {successMsg && (
-            <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3 text-emerald-400 text-xs">
+            <div className="mb-4 p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 flex items-start gap-2.5 text-emerald-300 text-xs">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>Registrasi berhasil! Mengalihkan ke halaman event...</span>
+              <span>Registrasi berhasil! Mengalihkan ke katalog event...</span>
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleRegister}>
+          <form className="space-y-3.5" onSubmit={handleRegister}>
             {/* Nama Lengkap */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                 Nama Lengkap
               </label>
               <div className="relative">
@@ -158,16 +159,16 @@ export default function RegisterPage() {
                   required
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Felix Palingan"
-                  className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
+                  placeholder="Nama Lengkap Sesuai KTM"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
             </div>
 
-            {/* NIM & Program Studi */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* NIM & Angkatan */}
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                   NIM / NIDN
                 </label>
                 <input
@@ -176,18 +177,18 @@ export default function RegisterPage() {
                   value={nim}
                   onChange={(e) => setNim(e.target.value)}
                   placeholder="065002100012"
-                  className="block w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none uppercase"
+                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors uppercase font-mono"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                   Angkatan
                 </label>
                 <select
                   value={angkatan}
                   onChange={(e) => setAngkatan(Number(e.target.value))}
-                  className="block w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
+                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
                 >
                   {ANGKATAN_OPTIONS.map((year) => (
                     <option key={year} value={year}>
@@ -198,9 +199,9 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Program Studi Dropdown */}
+            {/* Program Studi */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                 Program Studi
               </label>
               <div className="relative">
@@ -210,7 +211,7 @@ export default function RegisterPage() {
                 <select
                   value={prodi}
                   onChange={(e) => setProdi(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
                 >
                   {PRODI_OPTIONS.map((p) => (
                     <option key={p} value={p}>
@@ -223,7 +224,7 @@ export default function RegisterPage() {
 
             {/* No. WhatsApp & Email */}
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                 No. WhatsApp (Aktif)
               </label>
               <div className="relative">
@@ -236,13 +237,13 @@ export default function RegisterPage() {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="081234567890"
-                  className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                 Email
               </label>
               <div className="relative">
@@ -254,29 +255,31 @@ export default function RegisterPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@std.trisakti.ac.id"
-                  className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
+                  placeholder="mahasiswa@std.trisakti.ac.id"
+                  className="block w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Password & Confirm */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                   Kata Sandi
                 </label>
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="block w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
+                  />
+                </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
                   Ulangi Sandi
                 </label>
                 <input
@@ -285,7 +288,7 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 text-sm focus:border-blue-500 outline-none"
+                  className="block w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 text-base sm:text-xs focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
             </div>
@@ -293,7 +296,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading || successMsg}
-              className="w-full mt-4 py-3.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full mt-3 py-3 px-4 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-[0.98] text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading ? (
                 <>
@@ -301,19 +304,22 @@ export default function RegisterPage() {
                   <span>Mendaftarkan Akun...</span>
                 </>
               ) : (
-                <span>Selesaikan Pendaftaran</span>
+                <>
+                  <UserPlus className="w-4 h-4" />
+                  <span>Selesaikan Pendaftaran</span>
+                </>
               )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-xs text-slate-400">
+          <div className="mt-5 text-center text-xs text-slate-400">
             Sudah memiliki akun?{" "}
             <Link href="/login" className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-4">
               Masuk di sini
             </Link>
           </div>
         </div>
-      </div>
-    </div>
+      </main>
+    </AppShell>
   );
 }

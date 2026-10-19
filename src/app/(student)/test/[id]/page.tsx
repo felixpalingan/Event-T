@@ -2,15 +2,15 @@
 
 import { useEffect, useState, use, Suspense } from "react";
 import Link from "next/link";
+import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import { 
   ArrowLeft, 
   HelpCircle, 
   CheckCircle2, 
-  AlertCircle, 
   Loader2, 
   Award,
-  Sparkles 
+  Send
 } from "lucide-react";
 
 interface Question {
@@ -99,7 +99,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
     // Check if all answered
     const unanswered = questions.filter((q) => !answers[q.question_number]);
     if (unanswered.length > 0) {
-      setMessage({ type: "error", text: `Harap jawab semua soal! Masih ada ${unanswered.length} soal belum diisi.` });
+      setMessage({ type: "error", text: `Harap jawab semua soal! Masih ada ${unanswered.length} butir belum diisi.` });
       return;
     }
 
@@ -160,38 +160,39 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col py-8 px-4">
-      <div className="max-w-2xl mx-auto w-full">
-        {/* Back Link */}
-        <Link
-          href="/tickets"
-          className="inline-flex items-center gap-2 text-xs font-medium text-slate-400 hover:text-white transition-colors mb-6"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Tiket</span>
+    <AppShell showBottomNav={false}>
+      {/* Top App Bar */}
+      <header className="sticky top-0 z-40 bg-slate-950/95 border-b border-slate-800/80 px-4 py-3 flex items-center justify-between">
+        <Link href="/tickets" className="text-slate-400 hover:text-white p-1 -ml-1 active:scale-95 transition-transform flex items-center gap-1 text-xs">
+          <ArrowLeft className="w-5 h-5" />
+          <span>Kembali</span>
         </Link>
+        <span className="text-xs font-semibold text-slate-400">Evaluasi Pemahaman</span>
+      </header>
 
-        {/* Header */}
-        <div className="mb-6">
-          <span className="text-xs font-semibold text-blue-400 uppercase tracking-widest">
-            Evaluasi Pemahaman Acara
+      {/* Main Content */}
+      <main className="flex-1 px-4 py-4 space-y-4">
+        {/* Title */}
+        <div>
+          <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-0.5">
+            Ujian Pemahaman Peserta
           </span>
-          <h1 className="text-xl md:text-2xl font-extrabold text-white mt-1">
+          <h1 className="text-sm font-bold text-white leading-snug">
             {eventTitle || "Evaluasi Seminar / Workshop"}
           </h1>
         </div>
 
         {/* Tab Switcher: Pre-Test vs Post-Test */}
-        <div className="grid grid-cols-2 p-1.5 rounded-2xl bg-slate-900 border border-slate-800 mb-8">
+        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-950 border border-slate-800">
           <button
             type="button"
             onClick={() => {
               setTestType("PRE");
               setScoreResult(null);
             }}
-            className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+            className={`py-2 rounded-lg text-xs font-bold active:scale-95 transition-all ${
               testType === "PRE"
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                ? "bg-blue-700 text-white shadow-sm"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -203,9 +204,9 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
               setTestType("POST");
               setScoreResult(null);
             }}
-            className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+            className={`py-2 rounded-lg text-xs font-bold active:scale-95 transition-all ${
               testType === "POST"
-                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                ? "bg-blue-700 text-white shadow-sm"
                 : "text-slate-400 hover:text-white"
             }`}
           >
@@ -213,39 +214,38 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
           </button>
         </div>
 
-        {/* Feedback message */}
+        {/* Message Banner */}
         {message && (
           <div
-            className={`mb-6 p-4 rounded-2xl flex items-center gap-3 text-xs font-medium ${
+            className={`p-3 rounded-xl flex items-center gap-2.5 text-xs font-medium ${
               message.type === "success"
-                ? "bg-emerald-500/10 border border-emerald-500/30 text-emerald-300"
-                : "bg-red-500/10 border border-red-500/30 text-red-300"
+                ? "bg-emerald-950/60 border border-emerald-500/40 text-emerald-300"
+                : "bg-red-950/60 border border-red-500/40 text-red-300"
             }`}
           >
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{message.text}</span>
           </div>
         )}
 
         {/* Result Score Banner */}
         {scoreResult !== null && (
-          <div className="mb-8 p-6 rounded-3xl bg-gradient-to-r from-blue-950/60 to-indigo-950/50 border border-blue-500/30 text-center">
-            <Sparkles className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-            <h3 className="text-sm font-semibold text-slate-300">
-              Hasil {testType === "PRE" ? "Pre-Test" : "Post-Test"} Anda:
+          <div className="p-5 rounded-3xl bg-slate-950 border border-slate-800 text-center shadow-lg">
+            <h3 className="text-xs font-semibold text-slate-400">
+              Hasil {testType === "PRE" ? "Pre-Test" : "Post-Test"} Anda
             </h3>
-            <span className="block text-4xl font-extrabold text-white mt-1">
-              {scoreResult} <span className="text-lg text-slate-400">/ 100</span>
+            <span className="block text-3xl font-extrabold text-amber-400 mt-1">
+              {scoreResult} <span className="text-sm font-normal text-slate-400">/ 100</span>
             </span>
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
               {testType === "POST" 
-                ? "Syarat evaluasi selesai! Anda kini dapat mengunduh E-Sertifikat jika sudah check-in."
-                : "Nilai awal Anda telah tersimpan sebagai pembanding evaluasi."}
+                ? "Syarat evaluasi selesai! Anda kini dapat mengunduh E-Sertifikat jika sudah divalidasi hadir di lokasi."
+                : "Nilai awal Anda telah tersimpan sebagai tolok ukur evaluasi materi."}
             </p>
             {testType === "POST" && (
               <Link
                 href="/certificates"
-                className="mt-4 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30 transition-all"
+                className="mt-3.5 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold active:scale-95 transition-all shadow-sm"
               >
                 <Award className="w-4 h-4" />
                 <span>Buka Halaman E-Sertifikat</span>
@@ -255,43 +255,43 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
         )}
 
         {loading ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-44 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse" />
+              <div key={i} className="h-36 rounded-2xl bg-slate-950 border border-slate-800 animate-pulse" />
             ))}
           </div>
         ) : questions.length === 0 ? (
-          <div className="text-center py-12 px-4 rounded-3xl bg-slate-900/40 border border-slate-800">
-            <HelpCircle className="w-10 h-10 text-slate-600 mx-auto mb-2" />
+          <div className="text-center py-10 px-4 rounded-3xl bg-slate-950 border border-slate-800">
+            <HelpCircle className="w-8 h-8 text-slate-600 mx-auto mb-2" />
             <p className="text-xs text-slate-400">
-              Panitia belum mengunggah butir soal evaluasi untuk acara ini.
+              Panitia belum merilis butir soal evaluasi untuk acara ini.
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {questions.map((q, idx) => {
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {questions.map((q) => {
               const currentAnswer = answers[q.question_number];
 
               return (
                 <div
                   key={q.id}
-                  className="p-6 rounded-3xl bg-slate-900/80 border border-slate-800 shadow-lg"
+                  className="p-4 rounded-2xl bg-slate-950 border border-slate-800 shadow-md"
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="px-2.5 py-0.5 rounded-md bg-blue-900/30 text-blue-300 border border-blue-500/30 text-[10px] font-bold">
                       Soal #{q.question_number}
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      Poin: {Math.round(100 / questions.length)}
+                    <span className="text-[10px] font-mono text-slate-500">
+                      Bobot: {Math.round(100 / questions.length)} Poin
                     </span>
                   </div>
 
-                  <p className="text-sm font-semibold text-slate-100 mb-4 leading-relaxed">
+                  <p className="text-xs font-semibold text-slate-100 mb-3 leading-relaxed">
                     {q.question_text}
                   </p>
 
                   {/* Options A, B, C, D */}
-                  <div className="space-y-2.5">
+                  <div className="space-y-2">
                     {[
                       { key: "A", text: q.option_a },
                       { key: "B", text: q.option_b },
@@ -305,22 +305,22 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
                           key={key}
                           type="button"
                           onClick={() => handleSelectAnswer(q.question_number, key)}
-                          className={`w-full p-3.5 rounded-2xl text-left text-xs font-medium border flex items-center gap-3 transition-all ${
+                          className={`w-full p-3 rounded-xl text-left text-xs font-medium border flex items-center gap-2.5 active:scale-[0.99] transition-all ${
                             isSelected
-                              ? "bg-blue-600/20 border-blue-500 text-blue-200 shadow-sm"
-                              : "bg-slate-950/60 border-slate-800 text-slate-300 hover:border-slate-700"
+                              ? "bg-blue-950/60 border-blue-500 text-blue-200"
+                              : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700"
                           }`}
                         >
                           <span
-                            className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 ${
+                            className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[11px] shrink-0 ${
                               isSelected
-                                ? "bg-blue-600 text-white"
+                                ? "bg-blue-700 text-white"
                                 : "bg-slate-800 text-slate-400"
                             }`}
                           >
                             {key}
                           </span>
-                          <span>{text}</span>
+                          <span className="leading-snug">{text}</span>
                         </button>
                       );
                     })}
@@ -332,7 +332,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full py-3 px-4 rounded-xl bg-blue-700 hover:bg-blue-600 active:scale-[0.98] text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {submitting ? (
                 <>
@@ -340,13 +340,16 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
                   <span>Menghitung Skor...</span>
                 </>
               ) : (
-                <span>Kirim Jawaban {testType === "PRE" ? "Pre-Test" : "Post-Test"}</span>
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Kirim Jawaban {testType === "PRE" ? "Pre-Test" : "Post-Test"}</span>
+                </>
               )}
             </button>
           </form>
         )}
-      </div>
-    </div>
+      </main>
+    </AppShell>
   );
 }
 
