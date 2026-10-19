@@ -9,6 +9,7 @@ import {
   MapPin, 
   Search, 
   QrCode, 
+  Ticket,
   CheckCircle2, 
   Loader2,
   Clock,
@@ -176,34 +177,42 @@ export default function EventsPage() {
 
   return (
     <AppShell>
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 md:bg-white border-b md:border border-slate-200/90 md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 flex items-center justify-between backdrop-blur-md md:backdrop-blur-none md:mt-6 shadow-2xs">
+        <div className="flex items-center gap-2.5 md:gap-3.5">
+          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold text-slate-900 tracking-tight">Katalog Kegiatan FTI</h1>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 hidden md:flex items-center justify-center text-blue-700 shrink-0">
+            <Ticket className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight">Katalog Kegiatan FTI</h1>
+            <span className="text-[10px] md:text-xs text-blue-700 font-semibold block">
+              Jelajahi Seminar, Workshop &amp; Lomba Resmi Kampus
+            </span>
+          </div>
         </div>
 
         <Link 
           href="/tickets" 
-          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 flex items-center gap-1.5 active:scale-95 transition-all"
+          className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1.5 active:scale-95 transition-all shadow-2xs"
         >
-          <QrCode className="w-3.5 h-3.5" />
-          <span>Tiket</span>
+          <QrCode className="w-4 h-4" />
+          <span>Tiket Saya</span>
         </Link>
       </header>
 
-      {/* Search Input Bar */}
-      <div className="px-4 pt-3 pb-1">
-        <div className="relative">
+      {/* Search & Category Filter Toolbar */}
+      <div className="px-4 md:px-0 pt-3 md:pt-4 pb-2 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Cari seminar, workshop, lab..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-600 outline-none transition-colors"
+            className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 outline-none transition-colors shadow-2xs"
           />
           {search && (
             <button
@@ -214,38 +223,38 @@ export default function EventsPage() {
             </button>
           )}
         </div>
-      </div>
 
-      {/* Category Pills (Horizontal Scroll) */}
-      <div className="px-4 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar">
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap active:scale-95 transition-all ${
-              selectedCategory === cat
-                ? "bg-blue-600 text-white shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200"
-            }`}
-          >
-            {cat === "SEMINAR" ? "Seminar" :
-             cat === "WORKSHOP" ? "Workshop" :
-             cat === "KULIAH_TAMU" ? "Kuliah Tamu" :
-             cat === "LOMBA" ? "Lomba" : "Semua Acara"}
-          </button>
-        ))}
+        {/* Category Pills (Horizontal Scroll) */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap active:scale-95 transition-all ${
+                selectedCategory === cat
+                  ? "bg-blue-600 text-white shadow-xs"
+                  : "bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {cat === "SEMINAR" ? "Seminar" :
+               cat === "WORKSHOP" ? "Workshop" :
+               cat === "KULIAH_TAMU" ? "Kuliah Tamu" :
+               cat === "LOMBA" ? "Lomba" : "Semua Acara"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Feedback Banner */}
       {message && (
-        <div className="mx-4 mt-2 p-3 rounded-xl flex items-center gap-2.5 text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">
+        <div className="mx-4 md:mx-0 mt-2 p-3.5 rounded-xl flex items-center gap-2.5 text-xs font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>{message.text}</span>
         </div>
       )}
 
-      {/* Events Feed List */}
-      <main className="flex-1 px-4 py-3 space-y-3.5">
+      {/* Events Feed Grid (1-col on mobile, 2 or 3-col on desktop) */}
+      <main className="flex-1 px-4 md:px-0 py-3 md:py-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredEvents.map((event) => {
           const isClaimed = claimedEventIds.includes(event.id);
           const eventDate = new Date(event.event_start_at);

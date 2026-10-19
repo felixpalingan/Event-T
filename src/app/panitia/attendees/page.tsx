@@ -97,111 +97,115 @@ export default function AttendeesChecklistPage() {
 
   return (
     <AppShell>
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 md:bg-white border-b md:border border-slate-200/90 md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 flex items-center justify-between backdrop-blur-md md:backdrop-blur-none md:mt-6 shadow-2xs">
+        <div className="flex items-center gap-2.5 md:gap-3.5">
+          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 hidden md:flex items-center justify-center text-emerald-700 shrink-0">
+            <Users className="w-5 h-5" />
+          </div>
           <div>
-            <h1 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-emerald-600" />
+            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
               <span>Daftar Kehadiran Peserta</span>
             </h1>
-            <span className="text-[10px] text-emerald-700 font-semibold block">
-              Portal Operasional Panitia
+            <span className="text-[10px] md:text-xs text-emerald-700 font-semibold block">
+              Portal Operasional Panitia Gate &amp; Check-In Manual
             </span>
           </div>
         </div>
 
         <Link
-          href="/scanner"
-          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white flex items-center gap-1 shadow-xs active:scale-95 transition-all"
+          href="/panitia/scanner"
+          className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
         >
-          <ScanLine className="w-3.5 h-3.5" />
-          <span>Kamera</span>
+          <ScanLine className="w-4 h-4" />
+          <span>Buka Scanner Kamera</span>
         </Link>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 py-4 space-y-4">
+      <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-4">
         {/* Attendance Counter Card */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-              Statistik Masuk Aula
+            <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider block">
+              Statistik Masuk Ruangan Acara
             </span>
-            <div className="flex items-baseline gap-1 mt-0.5">
-              <span className="text-2xl font-extrabold text-slate-900">
+            <div className="flex items-baseline gap-1.5 mt-1">
+              <span className="text-2xl md:text-3xl font-extrabold text-slate-900">
                 {attendedCount}
               </span>
-              <span className="text-xs font-medium text-slate-500">
+              <span className="text-xs md:text-sm font-medium text-slate-500">
                 / {attendees.length} Mahasiswa Terdaftar
               </span>
             </div>
           </div>
 
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 font-bold text-sm">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 font-extrabold text-base md:text-lg">
             {Math.round((attendedCount / (attendees.length || 1)) * 100)}%
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Cari NIM atau Nama Mahasiswa..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-emerald-600 outline-none transition-colors"
-          />
+        {/* Toolbar: Search & Filter Pills */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="Cari NIM atau Nama Mahasiswa..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 outline-none transition-colors shadow-2xs"
+            />
+          </div>
+
+          {/* Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setFilter("ALL")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all whitespace-nowrap ${
+                filter === "ALL"
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              Semua ({attendees.length})
+            </button>
+            <button
+              onClick={() => setFilter("ATTENDED")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all whitespace-nowrap ${
+                filter === "ATTENDED"
+                  ? "bg-emerald-600 text-white"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              Sudah Hadir ({attendedCount})
+            </button>
+            <button
+              onClick={() => setFilter("PENDING")}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all whitespace-nowrap ${
+                filter === "PENDING"
+                  ? "bg-amber-600 text-white"
+                  : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              Belum Hadir ({attendees.length - attendedCount})
+            </button>
+          </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setFilter("ALL")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all ${
-              filter === "ALL"
-                ? "bg-slate-900 text-white"
-                : "bg-slate-100 text-slate-600 border border-slate-200"
-            }`}
-          >
-            Semua ({attendees.length})
-          </button>
-          <button
-            onClick={() => setFilter("ATTENDED")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all ${
-              filter === "ATTENDED"
-                ? "bg-emerald-600 text-white"
-                : "bg-slate-100 text-slate-600 border border-slate-200"
-            }`}
-          >
-            Sudah Hadir ({attendedCount})
-          </button>
-          <button
-            onClick={() => setFilter("PENDING")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold active:scale-95 transition-all ${
-              filter === "PENDING"
-                ? "bg-amber-600 text-white"
-                : "bg-slate-100 text-slate-600 border border-slate-200"
-            }`}
-          >
-            Belum Hadir ({attendees.length - attendedCount})
-          </button>
-        </div>
-
-        {/* Attendees List */}
-        <div className="space-y-2.5">
+        {/* Attendees Grid (1-col on mobile, 2 or 3-col on desktop) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {filtered.map((item) => (
             <div
               key={item.ticket_id}
-              className="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-3"
+              className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-3 hover:border-slate-300 transition-all"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-bold text-slate-900 truncate">
+                  <h4 className="text-xs md:text-sm font-bold text-slate-900 truncate">
                     {item.student_name}
                   </h4>
                   {item.is_checked_in ? (

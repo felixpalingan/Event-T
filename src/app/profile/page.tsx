@@ -112,26 +112,34 @@ export default function ProfilePage() {
 
   return (
     <AppShell>
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 md:bg-white border-b md:border border-slate-200/90 md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 flex items-center justify-between backdrop-blur-md md:backdrop-blur-none md:mt-6 shadow-2xs">
+        <div className="flex items-center gap-2.5 md:gap-3.5">
+          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold text-slate-900 tracking-tight">Profil &amp; Otorisasi</h1>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 hidden md:flex items-center justify-center text-blue-700 shrink-0">
+            <User className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight">Profil Akun &amp; Otorisasi Peran</h1>
+            <span className="text-[10px] md:text-xs text-blue-700 font-semibold block">
+              Manajemen Data Mahasiswa FTI &amp; Pengaturan Hak Akses
+            </span>
+          </div>
         </div>
 
         <button
           onClick={handleLogout}
-          className="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 flex items-center gap-1 active:scale-95 transition-all"
+          className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 flex items-center gap-1.5 active:scale-95 transition-all shadow-2xs"
         >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Keluar</span>
+          <LogOut className="w-4 h-4" />
+          <span>Keluar Sesi</span>
         </button>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 py-4 space-y-4">
+      <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-5 max-w-3xl mx-auto w-full">
         {/* User Identity Card */}
         <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs relative overflow-hidden">
           <div className="flex items-start gap-3.5">

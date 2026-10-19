@@ -33,11 +33,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id" className="h-full bg-slate-950 text-slate-100 antialiased">
+    <html lang="id" className="h-full bg-slate-50 text-slate-900 antialiased">
       <head>
         <link rel="apple-touch-icon" href="/logo.png" />
       </head>
-      <body className={`${inter.className} min-h-full flex flex-col selection:bg-blue-600 selection:text-white`}>
+      <body className={`${inter.className} min-h-full flex flex-col selection:bg-blue-600 selection:text-white bg-slate-50`}>
         {children}
         <script
           dangerouslySetInnerHTML={{

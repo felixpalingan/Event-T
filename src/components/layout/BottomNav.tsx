@@ -176,8 +176,8 @@ export function BottomNav() {
   const navItems = getNavItems();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none">
-      <div className="w-full max-w-md md:max-w-lg bg-white/95 border-t border-slate-200/90 px-2 pt-2 pb-safe flex items-center justify-around pointer-events-auto shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex justify-center pointer-events-none md:hidden">
+      <div className="w-full max-w-md bg-white/95 border-t border-slate-200/90 px-2 pt-2 pb-safe flex items-center justify-around pointer-events-auto shadow-[0_-4px_20px_rgba(0,0,0,0.06)] backdrop-blur-md">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = item.isActive;

@@ -13,7 +13,8 @@ import {
   Award, 
   RefreshCw,
   ArrowLeft,
-  Calendar
+  Calendar,
+  QrCode
 } from "lucide-react";
 
 interface TicketItem {
@@ -126,38 +127,48 @@ export default function MyTicketsPage() {
 
   return (
     <AppShell>
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 md:bg-white border-b md:border border-slate-200/90 md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 flex items-center justify-between backdrop-blur-md md:backdrop-blur-none md:mt-6 shadow-2xs">
+        <div className="flex items-center gap-2.5 md:gap-3.5">
+          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold text-slate-900 tracking-tight">Tiket Saya &amp; Presensi</h1>
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 hidden md:flex items-center justify-center text-blue-700 shrink-0">
+            <QrCode className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight">Tiket Saya &amp; Akses Masuk</h1>
+            <span className="text-[10px] md:text-xs text-blue-700 font-semibold block">
+              Boarding Pass QR Offline &amp; Status Presensi Pintu
+            </span>
+          </div>
         </div>
 
         <button
           onClick={() => fetchTickets(true)}
-          className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 active:scale-95 transition-all"
+          className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 active:scale-95 transition-all border border-slate-200 bg-white shadow-2xs flex items-center gap-1.5 text-xs font-semibold"
           title="Sinkronisasi Status"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4 text-blue-600" />
+          <span className="hidden sm:inline">Sinkronisasi</span>
         </button>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 py-4 space-y-4">
-        <div className="text-center px-2">
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Tunjukkan kode QR kepada panitia di pintu masuk. Tersimpan otomatis di perangkat dan berfungsi secara offline.
+      <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-4">
+        <div className="text-center px-2 max-w-xl mx-auto">
+          <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
+            Tunjukkan kode QR kepada panitia di pintu masuk. Tersimpan otomatis di perangkat dan berfungsi secara offline tanpa koneksi internet.
           </p>
         </div>
 
-        {tickets.map((ticket) => {
-          const eventDate = ticket.event ? new Date(ticket.event.event_start_at) : new Date();
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {tickets.map((ticket) => {
+            const eventDate = ticket.event ? new Date(ticket.event.event_start_at) : new Date();
 
-          return (
-            <div
-              key={ticket.id}
+            return (
+              <div
+                key={ticket.id}
               className="rounded-3xl bg-white border border-slate-200 overflow-hidden shadow-xs relative"
             >
               {/* Event Header Card */}
@@ -272,6 +283,7 @@ export default function MyTicketsPage() {
             </div>
           );
         })}
+        </div>
       </main>
     </AppShell>
   );

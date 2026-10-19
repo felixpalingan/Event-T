@@ -134,26 +134,33 @@ export default function PanitiaScannerPage() {
 
   return (
     <AppShell>
-      {/* Top App Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 border-b border-slate-200/90 px-4 py-3 flex items-center justify-between backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 md:bg-white border-b md:border border-slate-200/90 md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 flex items-center justify-between backdrop-blur-md md:backdrop-blur-none md:mt-6 shadow-2xs">
+        <div className="flex items-center gap-2.5 md:gap-3.5">
+          <Link href="/" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <h1 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
-            <ScanLine className="w-4 h-4 text-emerald-600" />
-            <span>Presensi Pintu Panitia</span>
-          </h1>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 hidden md:flex items-center justify-center text-emerald-700 shrink-0">
+            <ScanLine className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
+              <span>Presensi Pintu Masuk Panitia</span>
+            </h1>
+            <span className="text-[10px] md:text-xs text-emerald-700 font-semibold block">
+              Pemindai QR Tiket Peserta &amp; Validasi Masuk Real-Time
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 font-bold">
-            Hadir: {checkInCount}
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-mono text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 font-bold">
+            Total Hadir: {checkInCount}
           </span>
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-900 active:scale-95 transition-all"
-            title={soundEnabled ? "Matikan Beep" : "Nyalakan Beep"}
+            className="p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-900 active:scale-95 transition-all border border-slate-200 bg-white shadow-2xs"
+            title={soundEnabled ? "Matikan Beep Audio" : "Nyalakan Beep Audio"}
           >
             {soundEnabled ? <Volume2 className="w-4 h-4 text-emerald-600" /> : <VolumeX className="w-4 h-4" />}
           </button>
@@ -161,8 +168,8 @@ export default function PanitiaScannerPage() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-4 py-4 flex flex-col items-center">
-        <p className="text-xs text-slate-500 text-center mb-4 leading-relaxed">
+      <main className="flex-1 px-4 md:px-0 py-4 md:py-6 flex flex-col items-center max-w-xl mx-auto w-full">
+        <p className="text-xs md:text-sm text-slate-500 text-center mb-5 leading-relaxed">
           Arahkan kamera ke QR tiket peserta. Validasi kehadiran diproses secara otomatis &lt;150ms.
         </p>
 
