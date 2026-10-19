@@ -11,11 +11,13 @@ import {
   Download, 
   CheckCircle2, 
   Users, 
-  Search,
-  RefreshCw,
-  X,
-  Copy,
-  Check
+  Search, 
+  RefreshCw, 
+  X, 
+  Copy, 
+  Check,
+  Award,
+  AlertCircle
 } from "lucide-react";
 
 interface ReportRow {
@@ -30,6 +32,7 @@ interface ReportRow {
   status: string;
   isCheckedIn: boolean;
   checkedInAt: string | null;
+  preTestScore: number | null;
   postTestScore: number | null;
   certificateNo: string | null;
 }
@@ -97,7 +100,7 @@ function AdminReportsContent() {
       const { data: eventsData } = await supabase
         .from("events")
         .select("id, title")
-        .order("id", { ascending: true });
+        .order("id", { ascending: false });
 
       if (eventsData) setEventsList(eventsData);
 
@@ -128,14 +131,17 @@ function AdminReportsContent() {
 
       if (tErr) throw tErr;
 
-      // 3. Fetch Test Scores
+      // 3. Fetch Test Scores (both Pre-Test and Post-Test)
       const { data: scoresData } = await supabase
         .from("user_test_scores")
-        .select("user_id, event_id, post_test_score");
+        .select("user_id, event_id, pre_test_score, post_test_score");
 
-      const scoreMap = new Map<string, number | null>();
+      const scoreMap = new Map<string, { pre: number | null; post: number | null }>();
       scoresData?.forEach((s) => {
-        scoreMap.set(`${s.user_id}_${s.event_id}`, s.post_test_score);
+        scoreMap.set(`${s.user_id}_${s.event_id}`, {
+          pre: s.pre_test_score ?? null,
+          post: s.post_test_score ?? null,
+        });
       });
 
       // 4. Fetch Minted Certificates
@@ -152,7 +158,7 @@ function AdminReportsContent() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mapped: ReportRow[] = ticketsData.map((t: any) => {
           const key = `${t.user_id}_${t.event_id}`;
-          const postScore = scoreMap.get(key) ?? null;
+          const scores = scoreMap.get(key) || { pre: null, post: null };
           const certNo = certMap.get(key) ?? null;
 
           return {
@@ -167,7 +173,8 @@ function AdminReportsContent() {
             status: t.status,
             isCheckedIn: Boolean(t.is_checked_in),
             checkedInAt: t.checked_in_at,
-            postTestScore: postScore,
+            preTestScore: scores.pre,
+            postTestScore: scores.post,
             certificateNo: certNo,
           };
         });
@@ -187,26 +194,30 @@ function AdminReportsContent() {
     setTimeout(() => setCopiedNim(null), 2000);
   };
 
+  // TASK 4.5: Full BAAK-ready CSV Export
   const handleExportCSV = () => {
     const headers = [
+      "No",
       "NIM",
       "Nama Mahasiswa",
       "Program Studi",
       "Angkatan",
       "Nama Acara",
       "Waktu Mendaftar",
-      "Status Kehadiran",
+      "Status Presensi Pintu",
       "Waktu Check-In",
+      "Skor Pre-Test",
       "Skor Post-Test",
-      "Status E-Sertifikat",
-      "Nomor Sertifikat",
+      "Status Kelulusan",
+      "Nomor Lisensi Sertifikat",
     ];
 
     const csvLines = [headers.join(",")];
 
-    filtered.forEach((r) => {
-      const isCertified = r.isCheckedIn && (r.postTestScore ?? 0) >= 60;
+    filtered.forEach((r, idx) => {
+      const isCertified = r.isCheckedIn && r.postTestScore !== null;
       const line = [
+        idx + 1,
         `"${r.nim}"`,
         `"${r.name.replace(/"/g, '""')}"`,
         `"${r.prodi.replace(/"/g, '""')}"`,
@@ -215,8 +226,9 @@ function AdminReportsContent() {
         `"${new Date(r.registeredAt).toLocaleString("id-ID")}"`,
         `"${r.isCheckedIn ? "HADIR" : "BELUM HADIR"}"`,
         `"${r.checkedInAt ? new Date(r.checkedInAt).toLocaleString("id-ID") : "-"}"`,
+        r.preTestScore !== null ? r.preTestScore : "Belum Mengisi",
         r.postTestScore !== null ? r.postTestScore : "Belum Mengisi",
-        `"${isCertified ? "LULUS" : "BELUM LULUS"}"`,
+        `"${isCertified ? "LULUS BERSERTIFIKAT" : "BELUM LENGKAP"}"`,
         `"${r.certificateNo || "-"}"`,
       ];
       csvLines.push(line.join(","));
@@ -226,7 +238,7 @@ function AdminReportsContent() {
     const url = URL.createObjectURL(csvBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `Rekap_Kehadiran_FTI_Trisakti_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute("download", `Laporan_BAAK_FTI_Trisakti_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -245,16 +257,16 @@ function AdminReportsContent() {
     let matchStatus = true;
     if (selectedStatus === "HADIR") matchStatus = r.isCheckedIn;
     if (selectedStatus === "BELUM_HADIR") matchStatus = !r.isCheckedIn;
-    if (selectedStatus === "LULUS") matchStatus = r.isCheckedIn && (r.postTestScore ?? 0) >= 60;
+    if (selectedStatus === "LULUS") matchStatus = r.isCheckedIn && r.postTestScore !== null;
 
     return matchSearch && matchEvent && matchStatus;
   });
 
-  const totalRegistered = filtered.length;
-  const totalAttended = filtered.filter((r) => r.isCheckedIn).length;
-  const totalCertified = filtered.filter((r) => r.isCheckedIn && (r.postTestScore ?? 0) >= 60).length;
+  const totalRegistered = rows.length;
+  const totalAttended = rows.filter((r) => r.isCheckedIn).length;
+  const totalCertified = rows.filter((r) => r.isCheckedIn && r.postTestScore !== null).length;
 
-  const activeFilteredEventObj = eventsList.find((e) => String(e.id) === selectedEventId);
+  const activeFilteredEventObj = eventsList.find((e) => e.id.toString() === selectedEventId);
 
   return (
     <AppShell>
@@ -264,20 +276,20 @@ function AdminReportsContent() {
           <Link href="/admin" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden" title="Kembali ke Dashboard">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 hidden md:flex items-center justify-center text-emerald-700 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 hidden md:flex items-center justify-center text-blue-700 shrink-0">
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
             <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 mb-0.5">
-              <Link href="/admin" className="hover:text-emerald-700 transition-colors">Dashboard Admin</Link>
+              <Link href="/admin" className="hover:text-blue-600 transition-colors">Dashboard Admin</Link>
               <span>/</span>
               <span className="text-slate-800 font-semibold">Laporan &amp; Rekapitulasi</span>
             </div>
             <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
-              <span>Laporan &amp; Rekapitulasi Mahasiswa</span>
+              <span>Laporan Rekapitulasi Kegiatan (BAAK)</span>
             </h1>
-            <span className="text-[10px] md:text-xs text-emerald-700 font-semibold block">
-              Ekspor Data Presensi, Hasil Evaluasi &amp; Validasi Kelulusan BAAK
+            <span className="text-[10px] md:text-xs text-blue-700 font-semibold block">
+              Daftar Presensi Pintu, Nilai Pre/Post Test &amp; Lisensi Sertifikat
             </span>
           </div>
         </div>
@@ -287,18 +299,19 @@ function AdminReportsContent() {
             type="button"
             onClick={() => fetchReportData(true)}
             className="p-2 rounded-xl text-slate-500 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs"
-            title="Muat Ulang Data Live"
+            title="Segarkan Data Laporan"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-emerald-600" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-blue-600" : ""}`} />
           </button>
           <button
             type="button"
             onClick={handleExportCSV}
             disabled={filtered.length === 0}
-            className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white flex items-center gap-2 shadow-xs active:scale-95 transition-all"
+            className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white flex items-center gap-1.5 shadow-xs transition-all disabled:opacity-50"
+            title="Unduh format spreadsheet CSV untuk arsip BAAK"
           >
             <Download className="w-4 h-4" />
-            <span>Ekspor CSV</span>
+            <span>Ekspor CSV BAAK</span>
           </button>
         </div>
       </header>
@@ -307,7 +320,7 @@ function AdminReportsContent() {
       <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-4">
         {/* Metric Cards Banner */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-2xs">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Total Pendaftar
             </span>
@@ -317,31 +330,31 @@ function AdminReportsContent() {
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">
+          <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">
               Hadir di Pintu
             </span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-2xl font-extrabold text-emerald-700">{totalAttended}</span>
+              <span className="text-2xl font-extrabold text-blue-700">{totalAttended}</span>
               <span className="text-xs text-slate-500">
                 ({totalRegistered ? Math.round((totalAttended / totalRegistered) * 100) : 0}%)
               </span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
-            <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">
-              Lulus Sertifikat
+          <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-2xs">
+            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">
+              Lulus E-Sertifikat
             </span>
             <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-2xl font-extrabold text-blue-700">{totalCertified}</span>
+              <span className="text-2xl font-extrabold text-emerald-700">{totalCertified}</span>
               <span className="text-xs text-slate-500">
                 ({totalAttended ? Math.round((totalCertified / totalAttended) * 100) : 0}% Hadir)
               </span>
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+          <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-2xs">
             <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider block">
               Belum Hadir
             </span>
@@ -381,7 +394,7 @@ function AdminReportsContent() {
               placeholder="Cari NIM, Nama, atau Prodi..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs md:text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 outline-none transition-colors shadow-2xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs md:text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 outline-none transition-colors shadow-2xs"
             />
           </div>
 
@@ -390,7 +403,7 @@ function AdminReportsContent() {
             <select
               value={selectedEventId}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-600 shadow-2xs max-w-[200px] truncate"
+              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-blue-600 shadow-2xs max-w-[200px] truncate"
             >
               <option value="ALL">Semua Kegiatan</option>
               {eventsList.map((ev) => (
@@ -404,7 +417,7 @@ function AdminReportsContent() {
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-600 shadow-2xs"
+              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-blue-600 shadow-2xs"
             >
               <option value="ALL">Semua Status</option>
               <option value="HADIR">Hadir di Lokasi</option>
@@ -414,7 +427,7 @@ function AdminReportsContent() {
           </div>
         </div>
 
-        {/* Loading State */}
+        {/* Content Table */}
         {loading && rows.length === 0 ? (
           <div className="p-8 bg-white border border-slate-200 rounded-3xl space-y-3 animate-pulse">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -440,7 +453,7 @@ function AdminReportsContent() {
             {/* Mobile View: Cards */}
             <div className="space-y-2.5 md:hidden">
               {filtered.map((item) => {
-                const isCertified = item.isCheckedIn && (item.postTestScore ?? 0) >= 60;
+                const isCertified = item.isCheckedIn && item.postTestScore !== null;
 
                 return (
                   <div
@@ -480,17 +493,22 @@ function AdminReportsContent() {
                       )}
                     </div>
 
-                    <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-                      <strong className="block text-slate-800 truncate mb-1">{item.eventTitle}</strong>
+                    <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200 space-y-1">
+                      <strong className="block text-slate-800 truncate">{item.eventTitle}</strong>
                       <div className="flex items-center justify-between">
                         <span>
-                          Post-Test:{" "}
-                          <strong>
-                            {item.postTestScore !== null ? `${item.postTestScore}/100` : "Belum Isi"}
-                          </strong>
+                          Pre-Test: <strong>{item.preTestScore !== null ? `${item.preTestScore}` : "-"}</strong>
+                        </span>
+                        <span>
+                          Post-Test: <strong>{item.postTestScore !== null ? `${item.postTestScore}` : "-"}</strong>
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-slate-200/80">
+                        <span className="text-[10px] font-mono text-slate-500 truncate max-w-[170px]">
+                          {item.certificateNo || "No Cert: -"}
                         </span>
                         <span className={`font-bold ${isCertified ? "text-emerald-700" : "text-amber-700"}`}>
-                          {isCertified ? "LULUS SERTIFIKAT" : "BELUM MEMENUHI"}
+                          {isCertified ? "LULUS" : "BELUM LENGKAP"}
                         </span>
                       </div>
                     </div>
@@ -504,23 +522,24 @@ function AdminReportsContent() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
-                    <th className="py-3.5 px-6">Mahasiswa</th>
-                    <th className="py-3.5 px-6">NIM</th>
-                    <th className="py-3.5 px-6">Program Studi</th>
-                    <th className="py-3.5 px-6">Kegiatan</th>
-                    <th className="py-3.5 px-6">Presensi Pintu</th>
-                    <th className="py-3.5 px-6">Skor Post-Test</th>
-                    <th className="py-3.5 px-6 text-right">E-Sertifikat</th>
+                    <th className="py-3.5 px-5">Mahasiswa</th>
+                    <th className="py-3.5 px-4">NIM</th>
+                    <th className="py-3.5 px-4">Program Studi</th>
+                    <th className="py-3.5 px-4">Kegiatan</th>
+                    <th className="py-3.5 px-4">Presensi Pintu</th>
+                    <th className="py-3.5 px-3 text-center">Pre-Test</th>
+                    <th className="py-3.5 px-3 text-center">Post-Test</th>
+                    <th className="py-3.5 px-5 text-right">E-Sertifikat</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
                   {filtered.map((item) => {
-                    const isCertified = item.isCheckedIn && (item.postTestScore ?? 0) >= 60;
+                    const isCertified = item.isCheckedIn && item.postTestScore !== null;
 
                     return (
                       <tr key={item.ticketId} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-3.5 px-6 font-bold text-slate-900">{item.name}</td>
-                        <td className="py-3.5 px-6 font-mono font-semibold text-blue-700">
+                        <td className="py-3.5 px-5 font-bold text-slate-900">{item.name}</td>
+                        <td className="py-3.5 px-4 font-mono font-semibold text-blue-700">
                           <div className="flex items-center gap-1.5">
                             <span>{item.nim}</span>
                             <button
@@ -537,42 +556,54 @@ function AdminReportsContent() {
                             </button>
                           </div>
                         </td>
-                        <td className="py-3.5 px-6">
+                        <td className="py-3.5 px-4">
                           {item.prodi} ({item.angkatan})
                         </td>
-                        <td className="py-3.5 px-6 max-w-[220px] truncate" title={item.eventTitle}>
+                        <td className="py-3.5 px-4 max-w-[180px] truncate" title={item.eventTitle}>
                           {item.eventTitle}
                         </td>
-                        <td className="py-3.5 px-6">
+                        <td className="py-3.5 px-4">
                           {item.isCheckedIn ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
                               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               HADIR
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-medium">
-                              BELUM HADIR
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-medium">
+                              BELUM
                             </span>
                           )}
                         </td>
-                        <td className="py-3.5 px-6 font-semibold">
-                          {item.postTestScore !== null ? (
-                            <span className={`font-mono ${item.postTestScore >= 60 ? "text-slate-900" : "text-red-600"}`}>
-                              {item.postTestScore}/100
-                            </span>
+                        <td className="py-3.5 px-3 text-center font-mono font-semibold">
+                          {item.preTestScore !== null ? (
+                            <span>{item.preTestScore}</span>
                           ) : (
-                            <span className="text-slate-400 italic">Belum Mengisi</span>
+                            <span className="text-slate-300">-</span>
                           )}
                         </td>
-                        <td className="py-3.5 px-6 text-right">
+                        <td className="py-3.5 px-3 text-center font-mono font-semibold">
+                          {item.postTestScore !== null ? (
+                            <span className="text-blue-700">{item.postTestScore}</span>
+                          ) : (
+                            <span className="text-slate-300">-</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-5 text-right">
                           {isCertified ? (
-                            <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 text-[11px] inline-flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>LULUS &amp; TERBIT</span>
-                            </span>
+                            <div className="inline-flex flex-col items-end">
+                              <span className="text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 text-[10px] inline-flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>LULUS</span>
+                              </span>
+                              {item.certificateNo && (
+                                <span className="text-[9px] font-mono text-slate-400 mt-0.5 truncate max-w-[140px]" title={item.certificateNo}>
+                                  {item.certificateNo}
+                                </span>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-amber-700 font-medium bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-[10px]">
-                              BELUM MEMENUHI
+                              BELUM LENGKAP
                             </span>
                           )}
                         </td>
@@ -602,4 +633,3 @@ export default function AdminReportsPage() {
     </Suspense>
   );
 }
-

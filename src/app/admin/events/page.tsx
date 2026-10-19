@@ -11,16 +11,19 @@ import {
   MapPin, 
   Clock, 
   Users, 
-  ChevronRight,
-  Archive,
-  ArchiveRestore,
-  Search,
-  Settings2,
-  FileSpreadsheet,
-  ExternalLink,
-  RefreshCw,
-  SlidersHorizontal,
-  CheckCircle2
+  Archive, 
+  ArchiveRestore, 
+  Search, 
+  Settings2, 
+  FileSpreadsheet, 
+  ExternalLink, 
+  RefreshCw, 
+  CheckCircle2,
+  Edit,
+  Bell,
+  AlertTriangle,
+  Loader2,
+  X
 } from "lucide-react";
 
 interface EventItem {
@@ -43,7 +46,11 @@ export default function AdminEventsListPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "ARCHIVED">("ALL");
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const [broadcastingId, setBroadcastingId] = useState<number | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  // Soft-Delete Confirmation Modal State
+  const [archiveModalEvent, setArchiveModalEvent] = useState<EventItem | null>(null);
 
   useEffect(() => {
     fetchAdminEvents();
@@ -52,7 +59,7 @@ export default function AdminEventsListPage() {
   const fetchAdminEvents = async () => {
     setLoading(true);
     try {
-      const { data: eventsData, error } = await supabase
+      const { data: eventsData } = await supabase
         .from("events")
         .select("id, title, category, mode, venue, quota, is_archived, event_start_at")
         .order("event_start_at", { ascending: false });
@@ -78,33 +85,77 @@ export default function AdminEventsListPage() {
     }
   };
 
-  const handleToggleArchive = async (eventId: number, currentArchived: boolean) => {
+  // Toggle archive status with soft-delete safeguard
+  const handleConfirmArchive = async () => {
+    if (!archiveModalEvent) return;
+    const eventId = archiveModalEvent.id;
     setActionLoadingId(eventId);
-    const newArchived = !currentArchived;
 
     try {
       const { error } = await supabase
         .from("events")
-        .update({ is_archived: newArchived })
+        .update({ is_archived: true })
         .eq("id", eventId);
 
       if (!error) {
         setEvents((prev) =>
-          prev.map((e) =>
-            e.id === eventId ? { ...e, is_archived: newArchived } : e
-          )
+          prev.map((e) => (e.id === eventId ? { ...e, is_archived: true } : e))
         );
-        setFeedbackMsg(
-          newArchived
-            ? "Acara berhasil dipindahkan ke arsip."
-            : "Acara berhasil diaktifkan kembali ke katalog publik."
-        );
+        setFeedbackMsg(`Acara "${archiveModalEvent.title}" berhasil diarsipkan.`);
         setTimeout(() => setFeedbackMsg(null), 3500);
       }
     } catch {
       // Ignore
     } finally {
       setActionLoadingId(null);
+      setArchiveModalEvent(null);
+    }
+  };
+
+  const handleRestoreEvent = async (eventId: number, title: string) => {
+    setActionLoadingId(eventId);
+    try {
+      const { error } = await supabase
+        .from("events")
+        .update({ is_archived: false })
+        .eq("id", eventId);
+
+      if (!error) {
+        setEvents((prev) =>
+          prev.map((e) => (e.id === eventId ? { ...e, is_archived: false } : e))
+        );
+        setFeedbackMsg(`Acara "${title}" berhasil diaktifkan kembali ke katalog publik.`);
+        setTimeout(() => setFeedbackMsg(null), 3500);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  // Broadcast in-app notification
+  const handleBroadcastEvent = async (event: EventItem) => {
+    if (!confirm(`Kirim notifikasi lonceng acara "${event.title}" ke SELURUH akun mahasiswa sekarang?`)) {
+      return;
+    }
+
+    setBroadcastingId(event.id);
+    try {
+      const { data, error } = await supabase.rpc("broadcast_event_notification", {
+        p_event_id: event.id,
+      });
+
+      if (!error) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const res = data as any;
+        setFeedbackMsg(res?.message || "Notifikasi berhasil disiarkan ke seluruh mahasiswa!");
+        setTimeout(() => setFeedbackMsg(null), 4000);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setBroadcastingId(null);
     }
   };
 
@@ -287,7 +338,7 @@ export default function AdminEventsListPage() {
                 >
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200 uppercase">
+                      <span className="font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200 uppercase">
                         {event.category.replace("_", " ")}
                       </span>
                       {event.is_archived ? (
@@ -343,26 +394,43 @@ export default function AdminEventsListPage() {
 
                   {/* Action Toolbar */}
                   <div className="pt-2 border-t border-slate-100 space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
+                    {/* Primary Actions: Edit, Data Peserta, Broadcast */}
+                    <div className="grid grid-cols-3 gap-1.5">
+                      <Link
+                        href={`/admin/events/${event.id}/edit`}
+                        className="py-2 px-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold text-center border border-blue-200 transition-all flex items-center justify-center gap-1 shadow-2xs"
+                        title="Edit Informasi & Template Sertifikat"
+                      >
+                        <Edit className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Edit</span>
+                      </Link>
+
                       <Link
                         href={`/admin/reports?eventId=${event.id}`}
-                        className="py-2 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold text-center border border-emerald-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                        className="py-2 px-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold text-center border border-emerald-200 transition-all flex items-center justify-center gap-1 shadow-2xs"
                         title="Lihat Data Presensi & Nilai Peserta Acara Ini"
                       >
                         <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Data Peserta</span>
+                        <span>Peserta</span>
                       </Link>
 
-                      <Link
-                        href="/panitia/control"
-                        className="py-2 px-2.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 text-xs font-semibold text-center border border-blue-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
-                        title="Buka / Tutup Gembok Post-Test Sesi"
+                      <button
+                        type="button"
+                        onClick={() => handleBroadcastEvent(event)}
+                        disabled={broadcastingId === event.id}
+                        className="py-2 px-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold text-center border border-amber-200 transition-all flex items-center justify-center gap-1 shadow-2xs active:scale-95"
+                        title="Broadcast Notifikasi Acara ke Mahasiswa"
                       >
-                        <Settings2 className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Kontrol Sesi</span>
-                      </Link>
+                        {broadcastingId === event.id ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <Bell className="w-3.5 h-3.5 text-amber-600" />
+                        )}
+                        <span>Notif</span>
+                      </button>
                     </div>
 
+                    {/* Secondary Actions: Live Preview & Archive/Restore Toggle */}
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/events#event-${event.id}`}
@@ -373,29 +441,28 @@ export default function AdminEventsListPage() {
                         <span>Katalog Publik</span>
                       </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => handleToggleArchive(event.id, event.is_archived)}
-                        disabled={actionLoadingId === event.id}
-                        className={`py-1.5 px-2.5 rounded-xl text-[11px] font-semibold border transition-all flex items-center gap-1 active:scale-95 ${
-                          event.is_archived
-                            ? "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                        }`}
-                        title={event.is_archived ? "Keluarkan dari Arsip" : "Arsipkan Acara"}
-                      >
-                        {event.is_archived ? (
-                          <>
-                            <ArchiveRestore className="w-3 h-3" />
-                            <span>Pulihkan</span>
-                          </>
-                        ) : (
-                          <>
-                            <Archive className="w-3 h-3" />
-                            <span>Arsipkan</span>
-                          </>
-                        )}
-                      </button>
+                      {event.is_archived ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRestoreEvent(event.id, event.title)}
+                          disabled={actionLoadingId === event.id}
+                          className="py-1.5 px-2.5 rounded-xl text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100 transition-all flex items-center gap-1 active:scale-95 shadow-2xs"
+                          title="Aktifkan kembali ke katalog"
+                        >
+                          <ArchiveRestore className="w-3 h-3 text-emerald-600" />
+                          <span>Pulihkan</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setArchiveModalEvent(event)}
+                          className="py-1.5 px-2.5 rounded-xl text-[11px] font-semibold border bg-slate-50 text-slate-600 border-slate-200 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-all flex items-center gap-1 active:scale-95"
+                          title="Arsipkan Acara (Soft-Delete)"
+                        >
+                          <Archive className="w-3 h-3" />
+                          <span>Arsipkan</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -404,7 +471,61 @@ export default function AdminEventsListPage() {
           </div>
         )}
       </main>
+
+      {/* SOFT-DELETE (ARSIP) CONFIRMATION MODAL */}
+      {archiveModalEvent && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 max-w-md w-full shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm md:text-base font-bold text-slate-900">
+                  Konfirmasi Pengarsipan Acara
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Arsipkan <strong>&ldquo;{archiveModalEvent.title}&rdquo;</strong> dari publik?
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setArchiveModalEvent(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
+              Acara akan <strong>disembunyikan dari katalog mahasiswa</strong>. Namun, <strong>seluruh data presensi pintu aula, nilai kuis mahasiswa, dan sertifikat yang telah diterbitkan tetap utuh</strong> di database dan laporan BAAK.
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setArchiveModalEvent(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-all"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmArchive}
+                disabled={actionLoadingId === archiveModalEvent.id}
+                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5"
+              >
+                {actionLoadingId === archiveModalEvent.id ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Archive className="w-3.5 h-3.5" />
+                )}
+                <span>Ya, Arsipkan Acara</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
-
