@@ -19,7 +19,9 @@ import {
   Sparkles, 
   RefreshCw, 
   ShieldAlert, 
-  Loader2 
+  Loader2,
+  Zap,
+  RotateCcw
 } from "lucide-react";
 
 interface ScanResult {
@@ -75,6 +77,13 @@ export function TicketScanner() {
   // File upload state
   const [uploadLoading, setUploadLoading] = useState(false);
 
+  // Scan Lock & Cooldown to prevent double scanning
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const isProcessingRef = useRef(false);
+  const lastScannedCodeRef = useRef<string | null>(null);
+  const lastScanTimeRef = useRef<number>(0);
+  const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Quick tickets simulation state
   const [quickTickets, setQuickTickets] = useState<QuickTicket[]>([]);
   const [loadingTickets, setLoadingTickets] = useState(false);
@@ -91,6 +100,9 @@ export function TicketScanner() {
 
     return () => {
       // Safe cleanup on unmount
+      if (cooldownIntervalRef.current) {
+        clearInterval(cooldownIntervalRef.current);
+      }
       safeStopCamera();
     };
   }, []);
@@ -180,13 +192,63 @@ export function TicketScanner() {
     }
   };
 
-  // Process ticket code through Supabase RPC
+  // Reset Cooldown Manually
+  const resetCooldown = () => {
+    if (cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+      cooldownIntervalRef.current = null;
+    }
+    setCooldownSeconds(0);
+    isProcessingRef.current = false;
+    setIsProcessing(false);
+  };
+
+  // Start Cooldown Countdown
+  const startCooldown = (seconds: number) => {
+    if (cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+    }
+
+    setCooldownSeconds(seconds);
+
+    cooldownIntervalRef.current = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          if (cooldownIntervalRef.current) {
+            clearInterval(cooldownIntervalRef.current);
+            cooldownIntervalRef.current = null;
+          }
+          isProcessingRef.current = false;
+          setIsProcessing(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Process ticket code through Supabase RPC with Double-Scan Prevention
   const handleValidateCode = async (rawCode: string) => {
-    if (isProcessing) return;
     const cleanCode = rawCode.trim();
     if (!cleanCode) return;
 
+    const now = Date.now();
+
+    // 1. Synchronously prevent concurrent executions
+    if (isProcessingRef.current) return;
+
+    // 2. Cooldown period: If ANY scan happened less than 2.5 seconds ago, ignore
+    if (now - lastScanTimeRef.current < 2500) return;
+
+    // 3. Same-ticket lockout: If this exact ticket was scanned less than 10 seconds ago, ignore completely!
+    if (lastScannedCodeRef.current === cleanCode && now - lastScanTimeRef.current < 10000) {
+      return;
+    }
+
+    isProcessingRef.current = true;
     setIsProcessing(true);
+    lastScannedCodeRef.current = cleanCode;
+    lastScanTimeRef.current = now;
 
     try {
       const { data, error } = await supabase.rpc("process_ticket_checkin", {
@@ -200,6 +262,7 @@ export function TicketScanner() {
           code: "SERVER_ERROR",
           message: error.message || "Gagal memproses tiket di database.",
         });
+        startCooldown(2);
       } else {
         const res = data as ScanResult;
         if (res.success) {
@@ -220,6 +283,9 @@ export function TicketScanner() {
           setQuickTickets((prev) =>
             prev.map((q) => (q.ticket_code === cleanCode ? { ...q, is_checked_in: true } : q))
           );
+          setLastResult(res);
+          // Jeda 3 detik setelah berhasil scan tiket agar tidak re-scan
+          startCooldown(3);
         } else {
           playBeep("error");
           if (res.student) {
@@ -233,8 +299,9 @@ export function TicketScanner() {
               ...prev.slice(0, 4),
             ]);
           }
+          setLastResult(res);
+          startCooldown(2);
         }
-        setLastResult(res);
       }
     } catch (err: unknown) {
       playBeep("error");
@@ -244,15 +311,13 @@ export function TicketScanner() {
         code: "CLIENT_ERROR",
         message: error.message || "Format kode QR tidak valid.",
       });
-    } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 1500);
+      startCooldown(2);
     }
   };
 
   // Safe Stop Camera
   const safeStopCamera = async () => {
+    resetCooldown();
     if (html5QrCodeRef.current) {
       try {
         const state = typeof html5QrCodeRef.current.getState === "function" 
@@ -556,8 +621,8 @@ export function TicketScanner() {
                   </div>
                 )}
 
-                {/* Sibling Overlay 3: Laser & Viewfinder Brackets (Only when camera active) */}
-                {isCameraActive && (
+                {/* Sibling Overlay 3: Laser & Viewfinder Brackets (Only when camera active and not in cooldown) */}
+                {isCameraActive && cooldownSeconds === 0 && (
                   <div className="absolute inset-0 pointer-events-none z-10">
                     {/* Viewfinder Target Bracket */}
                     <div className="absolute inset-8 border-2 border-emerald-400/50 rounded-2xl pointer-events-none">
@@ -573,12 +638,63 @@ export function TicketScanner() {
                 )}
 
                 {/* Sibling Overlay 4: Processing State */}
-                {isProcessing && (
+                {isProcessing && cooldownSeconds === 0 && (
                   <div className="absolute inset-0 bg-white/85 flex items-center justify-center backdrop-blur-xs z-20">
                     <div className="text-center">
                       <div className="w-8 h-8 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
                       <span className="text-xs font-bold text-emerald-800">Validasi Tiket Presensi...</span>
                     </div>
+                  </div>
+                )}
+
+                {/* Sibling Overlay 5: Cooldown / Jeda Anti-Double Scan */}
+                {cooldownSeconds > 0 && (
+                  <div className={`absolute inset-0 backdrop-blur-xs flex flex-col items-center justify-center p-6 text-center z-20 transition-all ${
+                    lastResult?.success ? "bg-emerald-950/85 text-white" : "bg-slate-950/85 text-white"
+                  }`}>
+                    {lastResult?.success ? (
+                      <>
+                        <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-2 shadow-lg shadow-emerald-500/30">
+                          <CheckCircle2 className="w-7 h-7" />
+                        </div>
+                        <h4 className="text-sm font-bold text-white mb-0.5">Tiket Berhasil Diverifikasi!</h4>
+                        <p className="text-xs text-emerald-200 font-semibold mb-3 truncate max-w-[200px]">
+                          {lastResult.student?.name}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-900/80 border border-emerald-400/40 text-[11px] font-mono font-bold text-emerald-300">
+                            Jeda: {cooldownSeconds}s
+                          </span>
+                          <button
+                            type="button"
+                            onClick={resetCooldown}
+                            className="px-3 py-1 rounded-full bg-white text-emerald-950 hover:bg-emerald-50 active:scale-95 text-[11px] font-bold shadow-xs transition-all flex items-center gap-1"
+                          >
+                            <Zap className="w-3 h-3 text-amber-500 fill-amber-500" />
+                            <span>Scan Sekarang</span>
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-12 h-12 rounded-full bg-amber-500 text-white flex items-center justify-center mb-2 shadow-lg shadow-amber-500/30">
+                          <AlertCircle className="w-7 h-7" />
+                        </div>
+                        <h4 className="text-xs font-bold text-white mb-1">
+                          {lastResult?.code === "ALREADY_CHECKED_IN" ? "Tiket Sudah Pernah Hadir" : "Presensi Ditolak"}
+                        </h4>
+                        <p className="text-[11px] text-slate-300 mb-3 max-w-[200px]">
+                          {lastResult?.message}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={resetCooldown}
+                          className="px-3 py-1 rounded-full bg-white text-slate-900 hover:bg-slate-100 active:scale-95 text-[11px] font-bold shadow-xs transition-all"
+                        >
+                          <span>Lanjut Scan Berikutnya</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -852,7 +968,10 @@ export function TicketScanner() {
 
             <button
               type="button"
-              onClick={() => setLastResult(null)}
+              onClick={() => {
+                setLastResult(null);
+                resetCooldown();
+              }}
               className="mt-3 w-full py-2 rounded-xl bg-white hover:bg-slate-50 active:scale-98 text-xs font-semibold text-slate-800 border border-slate-200 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
             >
               <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
