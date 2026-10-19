@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import { 
@@ -9,13 +10,12 @@ import {
   FileSpreadsheet, 
   Download, 
   CheckCircle2, 
-  Clock, 
   Users, 
   Search,
-  Filter,
   RefreshCw,
-  Award,
-  AlertCircle
+  X,
+  Copy,
+  Check
 } from "lucide-react";
 
 interface ReportRow {
@@ -39,14 +39,25 @@ interface EventOption {
   title: string;
 }
 
-export default function AdminReportsPage() {
+function AdminReportsContent() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const urlEventId = searchParams.get("eventId");
+
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [eventsList, setEventsList] = useState<EventOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [selectedEventId, setSelectedEventId] = useState<string>("ALL");
+  const [selectedEventId, setSelectedEventId] = useState<string>(urlEventId || "ALL");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [copiedNim, setCopiedNim] = useState<string | null>(null);
+
+  // Sync if URL param changes
+  useEffect(() => {
+    if (urlEventId) {
+      setSelectedEventId(urlEventId);
+    }
+  }, [urlEventId]);
 
   useEffect(() => {
     fetchReportData(true);
@@ -170,6 +181,12 @@ export default function AdminReportsPage() {
     }
   };
 
+  const handleCopyNim = (nim: string) => {
+    navigator.clipboard.writeText(nim);
+    setCopiedNim(nim);
+    setTimeout(() => setCopiedNim(null), 2000);
+  };
+
   const handleExportCSV = () => {
     const headers = [
       "NIM",
@@ -237,29 +254,37 @@ export default function AdminReportsPage() {
   const totalAttended = filtered.filter((r) => r.isCheckedIn).length;
   const totalCertified = filtered.filter((r) => r.isCheckedIn && (r.postTestScore ?? 0) >= 60).length;
 
+  const activeFilteredEventObj = eventsList.find((e) => String(e.id) === selectedEventId);
+
   return (
     <AppShell>
-      {/* Header */}
+      {/* Header & Breadcrumb */}
       <header className="sticky top-0 z-40 bg-white/95 md:bg-white border-b md:border border-slate-200/90 md:rounded-3xl px-4 md:px-6 py-3.5 md:py-5 flex items-center justify-between backdrop-blur-md md:backdrop-blur-none md:mt-6 shadow-2xs">
         <div className="flex items-center gap-2.5 md:gap-3.5">
-          <Link href="/admin" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden">
+          <Link href="/admin" className="text-slate-500 hover:text-slate-900 p-1 -ml-1 active:scale-95 transition-transform md:hidden" title="Kembali ke Dashboard">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 hidden md:flex items-center justify-center text-emerald-700 shrink-0">
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
+            <div className="hidden md:flex items-center gap-1.5 text-xs text-slate-500 mb-0.5">
+              <Link href="/admin" className="hover:text-emerald-700 transition-colors">Dashboard Admin</Link>
+              <span>/</span>
+              <span className="text-slate-800 font-semibold">Laporan &amp; Rekapitulasi</span>
+            </div>
             <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-1.5">
               <span>Laporan &amp; Rekapitulasi Mahasiswa</span>
             </h1>
             <span className="text-[10px] md:text-xs text-emerald-700 font-semibold block">
-              Ekspor Data Presensi, Hasil Evaluasi &amp; Validasi Kelulusan Admin
+              Ekspor Data Presensi, Hasil Evaluasi &amp; Validasi Kelulusan BAAK
             </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           <button
+            type="button"
             onClick={() => fetchReportData(true)}
             className="p-2 rounded-xl text-slate-500 hover:text-slate-900 border border-slate-200 hover:bg-slate-50 active:scale-95 transition-all shadow-2xs"
             title="Muat Ulang Data Live"
@@ -267,6 +292,7 @@ export default function AdminReportsPage() {
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-emerald-600" : ""}`} />
           </button>
           <button
+            type="button"
             onClick={handleExportCSV}
             disabled={filtered.length === 0}
             className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white flex items-center gap-2 shadow-xs active:scale-95 transition-all"
@@ -328,6 +354,24 @@ export default function AdminReportsPage() {
           </div>
         </div>
 
+        {/* Active Event Filter Notice */}
+        {selectedEventId !== "ALL" && activeFilteredEventObj && (
+          <div className="p-3.5 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between text-xs text-blue-900 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-blue-700">Filter Aktif Acara:</span>
+              <span className="font-bold">{activeFilteredEventObj.title}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedEventId("ALL")}
+              className="px-2.5 py-1 rounded-lg bg-white border border-blue-200 hover:bg-blue-100/50 text-blue-700 font-bold flex items-center gap-1 transition-all active:scale-95"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>Tampilkan Semua Kegiatan</span>
+            </button>
+          </div>
+        )}
+
         {/* Search & Filter Toolbar */}
         <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           <div className="relative flex-1 max-w-md">
@@ -337,7 +381,7 @@ export default function AdminReportsPage() {
               placeholder="Cari NIM, Nama, atau Prodi..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 outline-none transition-colors shadow-2xs"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-xs md:text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 outline-none transition-colors shadow-2xs"
             />
           </div>
 
@@ -346,7 +390,7 @@ export default function AdminReportsPage() {
             <select
               value={selectedEventId}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-600 shadow-2xs"
+              className="px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-700 outline-none focus:border-emerald-600 shadow-2xs max-w-[200px] truncate"
             >
               <option value="ALL">Semua Kegiatan</option>
               {eventsList.map((ev) => (
@@ -406,9 +450,24 @@ export default function AdminReportsPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
-                        <span className="text-[11px] font-mono text-blue-700 font-semibold">
-                          NIM: {item.nim} • {item.prodi} ({item.angkatan})
-                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-[11px] font-mono text-blue-700 font-semibold">
+                            NIM: {item.nim}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyNim(item.nim)}
+                            className="p-0.5 text-slate-400 hover:text-slate-600 active:scale-95"
+                            title="Salin NIM"
+                          >
+                            {copiedNim === item.nim ? (
+                              <Check className="w-3 h-3 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-3 h-3" />
+                            )}
+                          </button>
+                          <span className="text-[10px] text-slate-400">• {item.prodi}</span>
+                        </div>
                       </div>
                       {item.isCheckedIn ? (
                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
@@ -461,7 +520,23 @@ export default function AdminReportsPage() {
                     return (
                       <tr key={item.ticketId} className="hover:bg-slate-50/70 transition-colors">
                         <td className="py-3.5 px-6 font-bold text-slate-900">{item.name}</td>
-                        <td className="py-3.5 px-6 font-mono font-semibold text-blue-700">{item.nim}</td>
+                        <td className="py-3.5 px-6 font-mono font-semibold text-blue-700">
+                          <div className="flex items-center gap-1.5">
+                            <span>{item.nim}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyNim(item.nim)}
+                              className="text-slate-400 hover:text-slate-600 p-0.5 rounded transition-colors"
+                              title="Salin NIM"
+                            >
+                              {copiedNim === item.nim ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
                         <td className="py-3.5 px-6">
                           {item.prodi} ({item.angkatan})
                         </td>
@@ -513,3 +588,18 @@ export default function AdminReportsPage() {
     </AppShell>
   );
 }
+
+export default function AdminReportsPage() {
+  return (
+    <Suspense fallback={
+      <AppShell>
+        <div className="p-12 text-center text-xs font-semibold text-slate-400 animate-pulse">
+          Memuat Laporan &amp; Rekapitulasi...
+        </div>
+      </AppShell>
+    }>
+      <AdminReportsContent />
+    </Suspense>
+  );
+}
+

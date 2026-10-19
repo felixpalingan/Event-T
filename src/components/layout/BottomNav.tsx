@@ -77,16 +77,16 @@ export function BottomNav() {
           isActive: pathname === "/",
         },
         {
-          href: "/admin/events",
-          label: "Kelola Event",
+          href: "/admin",
+          label: "Dashboard",
           icon: LayoutDashboard,
-          isActive: pathname.startsWith("/admin/events") || pathname === "/admin",
+          isActive: pathname === "/admin",
         },
         {
-          href: "/panitia/scanner",
-          label: "Scanner",
-          icon: ScanLine,
-          isActive: pathname.startsWith("/panitia/scanner") || pathname === "/scanner",
+          href: "/admin/events",
+          label: "Acara",
+          icon: Calendar,
+          isActive: pathname.startsWith("/admin/events"),
         },
         {
           href: "/admin/reports",
