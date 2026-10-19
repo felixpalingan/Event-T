@@ -139,13 +139,9 @@ export default function EventsPage() {
           </div>
         </div>
 
-        <Link 
-          href="/tickets" 
-          className="text-xs md:text-sm font-semibold px-3 md:px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 flex items-center gap-1.5 active:scale-95 transition-all shadow-2xs"
-        >
-          <QrCode className="w-4 h-4" />
-          <span>Tiket Saya</span>
-        </Link>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
+          <span>{loading ? "..." : `${events.length} Kegiatan Aktif`}</span>
+        </div>
       </header>
 
       {/* Search & Category Filter Toolbar */}
@@ -308,13 +304,10 @@ export default function EventsPage() {
                     </div>
 
                     {isClaimed ? (
-                      <Link
-                        href="/tickets"
-                        className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5 active:scale-95 transition-all"
-                      >
+                      <span className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold flex items-center gap-1.5">
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Tiket Anda</span>
-                      </Link>
+                        <span>Terdaftar</span>
+                      </span>
                     ) : (
                       <button
                         onClick={() => handleClaimTicket(event.id)}
