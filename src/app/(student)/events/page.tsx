@@ -361,7 +361,7 @@ export default function EventsPage() {
                   {/* Actions & Claim Footer */}
                   <div className="p-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between gap-3">
                     <Link
-                      href={`/events/${event.slug}/test`}
+                      href={`/test/${event.id}`}
                       className="text-[11px] font-bold text-slate-600 hover:text-blue-700 flex items-center gap-1 py-1.5 px-2.5 rounded-lg hover:bg-white transition-colors"
                     >
                       <span>Uji Soal &amp; Sertifikat</span>

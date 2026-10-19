@@ -56,7 +56,7 @@ const DEMO_ACCOUNTS: DemoAccount[] = [
     avatarClass: "bg-gradient-to-tr from-blue-600 to-cyan-500 text-white shadow-md shadow-blue-500/30",
     buttonClass: "bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20",
     scenario: "Sudah Check-In gerbang & lulus Pre-Test (80). Siap langsung uji kerjakan Post-Test & klaim Sertifikat SKPI!",
-    targetRoute: "/events/seminar-ai-cloud-native-2026/test",
+    targetRoute: "/test/7",
     statusBadges: [
       { icon: CheckCircle2, label: "Check-In: Sudah Hadir", tone: "bg-emerald-50 text-emerald-700 border-emerald-200" },
       { icon: Award, label: "Pre-Test: 80 / 100", tone: "bg-blue-50 text-blue-700 border-blue-200" },

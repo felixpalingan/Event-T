@@ -539,7 +539,7 @@ export default function HomePage() {
                       <span>{role === "MAHASISWA" ? "Klaim Tiket Masuk" : "Buka Acara"}</span>
                     </Link>
                     <Link
-                      href={`/events/${events[0].slug}/test`}
+                      href={`/test/${events[0].id}`}
                       className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-100 active:scale-95 text-slate-700 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1"
                     >
                       <span>Uji Soal</span>
