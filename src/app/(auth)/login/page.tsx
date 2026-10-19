@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/client";
-import { ArrowLeft, Lock, Mail, AlertCircle, Loader2, LogIn } from "lucide-react";
+import { ArrowLeft, Lock, Mail, AlertCircle, Loader2, LogIn, Sparkles, Shield, ScanLine, User } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,6 +47,7 @@ export default function LoginPage() {
           window.dispatchEvent(new Event("role_changed"));
         }
 
+        // Automatic strict redirection based on account role
         if (userRole === "ADMIN") {
           router.push("/admin");
         } else if (userRole === "PANITIA") {
@@ -63,6 +64,12 @@ export default function LoginPage() {
     }
   };
 
+  const handleQuickFill = (roleEmail: string) => {
+    setEmail(roleEmail);
+    setPassword("Password123!");
+    setErrorMsg("");
+  };
+
   return (
     <AppShell showBottomNav={false}>
       {/* Top App Bar */}
@@ -71,13 +78,13 @@ export default function LoginPage() {
           <ArrowLeft className="w-5 h-5" />
           <span>Beranda</span>
         </Link>
-        <span className="text-xs font-semibold text-slate-500">Portal Masuk</span>
+        <span className="text-xs font-semibold text-slate-500">Portal Masuk Terpadu</span>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 px-5 py-8 flex flex-col justify-center">
+      <main className="flex-1 px-5 py-8 flex flex-col justify-center max-w-md mx-auto w-full">
         {/* Brand Header */}
-        <div className="flex flex-col items-center text-center mb-8">
+        <div className="flex flex-col items-center text-center mb-6">
           <div className="w-14 h-14 rounded-2xl bg-white p-2 flex items-center justify-center shadow-xs border border-slate-200 mb-3">
             <Image
               src="/logo.png"
@@ -95,10 +102,57 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {/* 1-Click Fast Credentials for Testing */}
+        <div className="mb-4 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 shadow-2xs">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2 text-center">
+            Pilih Akun Uji Coba (1-Klik Masuk)
+          </span>
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => handleQuickFill("mahasiswa@trisakti.ac.id")}
+              className={`p-2 rounded-xl border text-[11px] font-bold flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                email === "mahasiswa@trisakti.ac.id"
+                  ? "bg-blue-600 text-white border-blue-600 shadow-xs"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-blue-50"
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Mahasiswa</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill("panitia@trisakti.ac.id")}
+              className={`p-2 rounded-xl border text-[11px] font-bold flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                email === "panitia@trisakti.ac.id"
+                  ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-emerald-50"
+              }`}
+            >
+              <ScanLine className="w-3.5 h-3.5" />
+              <span>Panitia</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleQuickFill("admin@trisakti.ac.id")}
+              className={`p-2 rounded-xl border text-[11px] font-bold flex flex-col items-center gap-1 transition-all active:scale-95 ${
+                email === "admin@trisakti.ac.id"
+                  ? "bg-purple-600 text-white border-purple-600 shadow-xs"
+                  : "bg-white text-slate-700 border-slate-200 hover:bg-purple-50"
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Admin</span>
+            </button>
+          </div>
+        </div>
+
         {/* Form Container */}
         <div className="bg-white border border-slate-200 p-6 rounded-3xl shadow-xs">
           {errorMsg && (
-            <div className="mb-5 p-3 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-red-700 text-xs">
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex items-start gap-2.5 text-red-700 text-xs">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{errorMsg}</span>
             </div>
@@ -107,7 +161,7 @@ export default function LoginPage() {
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Email Kampus / Terdaftar
+                Email Terdaftar
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -118,8 +172,8 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="mahasiswa@trisakti.ac.id"
-                  className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-sm focus:bg-white focus:border-blue-600 outline-none transition-colors"
+                  placeholder="nama@trisakti.ac.id"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600 text-xs text-slate-900 transition-colors shadow-2xs"
                 />
               </div>
             </div>
@@ -138,7 +192,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="block w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-900 text-base sm:text-sm focus:bg-white focus:border-blue-600 outline-none transition-colors"
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-blue-600 text-xs text-slate-900 transition-colors shadow-2xs"
                 />
               </div>
             </div>
@@ -146,7 +200,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full mt-2 py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {loading ? (
                 <>
@@ -162,11 +216,13 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-5 text-center text-xs text-slate-500">
-            Belum memiliki akun?{" "}
-            <Link href="/register" className="text-blue-600 hover:text-blue-700 font-semibold underline underline-offset-4">
-              Daftar Mahasiswa
-            </Link>
+          <div className="mt-5 text-center">
+            <span className="text-xs text-slate-500">
+              Belum punya akun?{" "}
+              <Link href="/register" className="font-bold text-blue-600 hover:underline">
+                Daftar Mahasiswa Baru
+              </Link>
+            </span>
           </div>
         </div>
       </main>

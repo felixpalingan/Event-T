@@ -2,23 +2,20 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { createClient } from "@/lib/supabase/client";
 import { 
   User, 
-  ShieldCheck, 
   LogOut, 
   ArrowLeft, 
-  Check, 
-  Lock, 
-  Smartphone, 
-  Shield, 
-  BadgeCheck, 
   ChevronRight,
   ScanLine,
-  LayoutDashboard
+  LayoutDashboard,
+  Shield,
+  FileSpreadsheet,
+  QrCode,
+  Award
 } from "lucide-react";
 
 interface Profile {
@@ -35,19 +32,8 @@ interface Profile {
 export default function ProfilePage() {
   const router = useRouter();
   const supabase = createClient();
-  const [profile, setProfile] = useState<Profile>({
-    id: "demo-user",
-    name: "Felix Palingan",
-    nim_nidn: "065002100012",
-    email: "felix@std.trisakti.ac.id",
-    prodi: "Teknik Informatika",
-    angkatan: 2024,
-    phone_number: "081234567890",
-    role: "MAHASISWA",
-  });
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updatingRole, setUpdatingRole] = useState(false);
-  const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProfile();
@@ -57,55 +43,32 @@ export default function ProfilePage() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
+      if (!user) {
+        router.push("/login");
+        return;
+      }
 
-        if (data) {
-          setProfile(data as Profile);
-        }
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (data) {
+        setProfile(data as Profile);
       }
     } catch {
-      // Fallback demo profile
+      // Fallback
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSwitchRole = async (newRole: "MAHASISWA" | "PANITIA" | "ADMIN") => {
-    setUpdatingRole(true);
-    setFeedback(null);
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from("profiles")
-          .update({ role: newRole })
-          .eq("id", user.id);
-      }
-
-      setProfile((prev) => ({ ...prev, role: newRole }));
-      setFeedback(`Peran berhasil diubah menjadi ${newRole}! Tampilan otomatis disesuaikan.`);
-      
-      // Dispatch storage event to notify other components like BottomNav
-      if (typeof window !== "undefined") {
-        localStorage.setItem("user_role", newRole);
-        window.dispatchEvent(new Event("role_changed"));
-      }
-    } catch (err) {
-      console.error(err);
-      setFeedback("Gagal memperbarui peran.");
-    } finally {
-      setUpdatingRole(false);
-    }
-  };
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("user_role");
+    }
     router.push("/login");
     router.refresh();
   };
@@ -122,9 +85,9 @@ export default function ProfilePage() {
             <User className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight">Profil Akun &amp; Otorisasi Peran</h1>
+            <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight">Profil Pengguna</h1>
             <span className="text-[10px] md:text-xs text-blue-700 font-semibold block">
-              Manajemen Data Mahasiswa FTI &amp; Pengaturan Hak Akses
+              Identitas Sivitas Akademika Universitas Trisakti
             </span>
           </div>
         </div>
@@ -140,172 +103,178 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-5 max-w-3xl mx-auto w-full">
-        {/* User Identity Card */}
-        <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs relative overflow-hidden">
-          <div className="flex items-start gap-3.5">
-            <div className="w-13 h-13 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0 font-bold text-lg">
-              {profile.name.charAt(0)}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900 truncate">
-                  {profile.name}
-                </h2>
-                {profile.role === "ADMIN" && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 border border-blue-200">
-                    ADMIN
-                  </span>
-                )}
-                {profile.role === "PANITIA" && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    PANITIA
-                  </span>
-                )}
-                {profile.role === "MAHASISWA" && (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                    MAHASISWA
-                  </span>
-                )}
+        {loading ? (
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4 animate-pulse">
+            <div className="h-6 w-1/3 bg-slate-100 rounded"></div>
+            <div className="h-4 w-1/2 bg-slate-100 rounded"></div>
+            <div className="h-16 bg-slate-100 rounded-xl"></div>
+          </div>
+        ) : profile ? (
+          <>
+            {/* User Identity Card */}
+            <div className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs relative overflow-hidden">
+              <div className="flex items-start gap-3.5">
+                <div className="w-13 h-13 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-700 shrink-0 font-bold text-lg">
+                  {profile.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-base font-bold text-slate-900 truncate">
+                      {profile.name}
+                    </h2>
+                    {profile.role === "ADMIN" && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200">
+                        ADMIN
+                      </span>
+                    )}
+                    {profile.role === "PANITIA" && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        PANITIA
+                      </span>
+                    )}
+                    {profile.role === "MAHASISWA" && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">
+                        MAHASISWA
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-mono text-blue-700 font-semibold mt-0.5">
+                    NIM / NIDN: {profile.nim_nidn}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {profile.prodi} • Angkatan {profile.angkatan}
+                  </p>
+                </div>
               </div>
-              <p className="text-xs font-mono text-blue-700 font-semibold mt-0.5">
-                NIM: {profile.nim_nidn}
-              </p>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {profile.prodi} • Angkatan {profile.angkatan}
-              </p>
-            </div>
-          </div>
 
-          <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs text-slate-500">
-            <div>
-              <span className="block text-[10px] uppercase font-bold text-slate-400">Email</span>
-              <span className="truncate block font-medium text-slate-700">{profile.email}</span>
-            </div>
-            <div>
-              <span className="block text-[10px] uppercase font-bold text-slate-400">WhatsApp</span>
-              <span className="font-medium text-slate-700">{profile.phone_number || "-"}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Access Portals based on current role */}
-        <div className="space-y-2">
-          <span className="text-xs font-bold text-slate-900 uppercase tracking-wider px-1">
-            Area Kerja Anda Saat Ini
-          </span>
-
-          {profile.role === "ADMIN" && (
-            <Link
-              href="/admin"
-              className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 hover:bg-blue-50 active:scale-98 transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-700 text-white flex items-center justify-center">
-                  <LayoutDashboard className="w-5 h-5" />
+              <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                <div>
+                  <span className="block text-[10px] uppercase font-bold text-slate-400">Email Akun</span>
+                  <span className="truncate block font-medium text-slate-700">{profile.email}</span>
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">Konsol Admin Fakultas</h4>
-                  <p className="text-[11px] text-blue-700">Kelola event, bank soal, dan ekspor CSV</p>
+                  <span className="block text-[10px] uppercase font-bold text-slate-400">WhatsApp</span>
+                  <span className="font-medium text-slate-700">{profile.phone_number || "-"}</span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-          )}
-
-          {(profile.role === "PANITIA" || profile.role === "ADMIN") && (
-            <Link
-              href="/scanner"
-              className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 hover:bg-emerald-50 active:scale-98 transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center">
-                  <ScanLine className="w-5 h-5" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-900">Scanner Kamera Panitia</h4>
-                  <p className="text-[11px] text-emerald-700">Validasi presensi tiket peserta di pintu</p>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </Link>
-          )}
-
-          {profile.role === "MAHASISWA" && (
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
-              Anda terdaftar sebagai <strong>Mahasiswa Peserta</strong>. Menu navigasi Anda difokuskan pada eksplorasi event, passbook tiket QR, dan evaluasi post-test untuk mengunduh e-sertifikat.
             </div>
-          )}
-        </div>
 
-        {/* Feedback message */}
-        {feedback && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-medium">
-            {feedback}
-          </div>
-        )}
+            {/* Quick Access Portals based on current verified role */}
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-slate-900 uppercase tracking-wider px-1">
+                Area Kerja Hak Akses Anda
+              </span>
 
-        {/* Live Role Switcher Tool (Interactive Verification) */}
-        <div className="p-4 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Uji Coba Tampilan Peran (RBAC)
-            </span>
-            <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-              Pengujian Langsung
-            </span>
-          </div>
+              {profile.role === "ADMIN" && (
+                <div className="space-y-2">
+                  <Link
+                    href="/admin"
+                    className="p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200 hover:bg-purple-50 active:scale-98 transition-all flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-purple-700 text-white flex items-center justify-center">
+                        <LayoutDashboard className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">Konsol Admin Fakultas</h4>
+                        <p className="text-[11px] text-purple-700">Kelola event kampus, kuota, dan jadwal</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
 
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Pilih salah satu peran di bawah untuk mengubah tampilan dan hak akses secara instan:
-          </p>
+                  <Link
+                    href="/admin/reports"
+                    className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 active:scale-98 transition-all flex items-center justify-between shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center">
+                        <FileSpreadsheet className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">Rekapitulasi &amp; Ekspor CSV</h4>
+                        <p className="text-[11px] text-slate-500">Laporan presensi dan nilai post-test seluruh peserta</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
+                </div>
+              )}
 
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            {/* Mahasiswa Option */}
-            <button
-              onClick={() => handleSwitchRole("MAHASISWA")}
-              disabled={updatingRole}
-              className={`p-3 rounded-2xl border text-center flex flex-col items-center gap-1.5 transition-all ${
-                profile.role === "MAHASISWA"
-                  ? "bg-blue-50 border-blue-600 text-blue-900 shadow-xs"
-                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              <Smartphone className="w-5 h-5 text-blue-600" />
-              <span className="text-xs font-bold block">Peserta</span>
-              <span className="text-[10px] text-slate-500 block leading-tight">Mahasiswa</span>
-            </button>
+              {profile.role === "PANITIA" && (
+                <div className="space-y-2">
+                  <Link
+                    href="/panitia/scanner"
+                    className="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 hover:bg-emerald-50 active:scale-98 transition-all flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center">
+                        <ScanLine className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">Scanner Kamera QR Gate</h4>
+                        <p className="text-[11px] text-emerald-700">Validasi presensi tiket peserta di pintu aula</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
 
-            {/* Panitia Option */}
-            <button
-              onClick={() => handleSwitchRole("PANITIA")}
-              disabled={updatingRole}
-              className={`p-3 rounded-2xl border text-center flex flex-col items-center gap-1.5 transition-all ${
-                profile.role === "PANITIA"
-                  ? "bg-emerald-50 border-emerald-600 text-emerald-900 shadow-xs"
-                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              <ScanLine className="w-5 h-5 text-emerald-600" />
-              <span className="text-xs font-bold block">Panitia</span>
-              <span className="text-[10px] text-slate-500 block leading-tight">Scanner Pintu</span>
-            </button>
+                  <Link
+                    href="/panitia/attendees"
+                    className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 active:scale-98 transition-all flex items-center justify-between shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">Daftar Kehadiran Peserta</h4>
+                        <p className="text-[11px] text-slate-500">Presensi manual dan statistik masuk ruangan</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
+                </div>
+              )}
 
-            {/* Admin Option */}
-            <button
-              onClick={() => handleSwitchRole("ADMIN")}
-              disabled={updatingRole}
-              className={`p-3 rounded-2xl border text-center flex flex-col items-center gap-1.5 transition-all ${
-                profile.role === "ADMIN"
-                  ? "bg-indigo-50 border-indigo-600 text-indigo-900 shadow-xs"
-                  : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              <Shield className="w-5 h-5 text-indigo-600" />
-              <span className="text-xs font-bold block">Admin</span>
-              <span className="text-[10px] text-slate-500 block leading-tight">Fakultas / BEM</span>
-            </button>
-          </div>
-        </div>
+              {profile.role === "MAHASISWA" && (
+                <div className="space-y-2">
+                  <Link
+                    href="/tickets"
+                    className="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 hover:bg-blue-50 active:scale-98 transition-all flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                        <QrCode className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">Tiket &amp; Boarding Pass QR</h4>
+                        <p className="text-[11px] text-blue-700">Buka tiket digital untuk presensi pintu masuk</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
+
+                  <Link
+                    href="/certificates"
+                    className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 active:scale-98 transition-all flex items-center justify-between shadow-2xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center">
+                        <Award className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">Klaim E-Sertifikat</h4>
+                        <p className="text-[11px] text-slate-500">Unduh PDF sertifikat kelulusan kegiatan</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </>
+        ) : null}
       </main>
     </AppShell>
   );

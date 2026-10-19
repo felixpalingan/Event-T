@@ -85,7 +85,6 @@ export function TicketScanner() {
 
   // Role check
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [switchingRole, setSwitchingRole] = useState(false);
 
   useEffect(() => {
     checkUserRole();
@@ -109,28 +108,6 @@ export function TicketScanner() {
       }
     } catch {
       // Ignore
-    }
-  };
-
-  const handlePromoteToPanitia = async () => {
-    setSwitchingRole(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from("profiles")
-          .update({ role: "PANITIA" })
-          .eq("id", user.id);
-        setUserRole("PANITIA");
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user_role", "PANITIA");
-          window.dispatchEvent(new Event("role_changed"));
-        }
-      }
-    } catch {
-      // Fallback
-    } finally {
-      setSwitchingRole(false);
     }
   };
 
@@ -422,23 +399,22 @@ export function TicketScanner() {
 
       {/* Main Content */}
       <main className="flex-1 px-4 md:px-0 py-4 md:py-6 flex flex-col items-center max-w-xl mx-auto w-full space-y-4">
-        {/* Role Warning & Quick Switch Banner if Mahasiswa */}
+        {/* Notice if logged in as Mahasiswa */}
         {userRole === "MAHASISWA" && (
           <div className="w-full p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-3 shadow-2xs">
             <div className="flex items-center gap-2.5">
               <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0" />
               <div>
-                <strong className="block font-bold">Peran Anda Saat Ini: Mahasiswa</strong>
-                <span>Presensi pintu memerlukan wewenang Panitia.</span>
+                <strong className="block font-bold">Akun Terdaftar: Mahasiswa</strong>
+                <span>Presensi pintu aula memerlukan akun bertugas Panitia.</span>
               </div>
             </div>
-            <button
-              onClick={handlePromoteToPanitia}
-              disabled={switchingRole}
+            <Link
+              href="/login"
               className="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold active:scale-95 transition-all shrink-0 shadow-xs"
             >
-              {switchingRole ? "Mengalihkan..." : "Aktifkan Panitia"}
-            </button>
+              Ganti Akun
+            </Link>
           </div>
         )}
 

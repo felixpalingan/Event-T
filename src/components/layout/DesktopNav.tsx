@@ -10,16 +10,14 @@ import {
   Ticket, 
   QrCode, 
   Award, 
-  ScanLine,
-  User,
-  LayoutDashboard,
-  Users,
-  Settings2,
-  FileSpreadsheet,
-  Shield,
-  ChevronDown,
-  Sparkles,
-  ExternalLink
+  ScanLine, 
+  User, 
+  LayoutDashboard, 
+  Users, 
+  Settings2, 
+  FileSpreadsheet, 
+  Shield, 
+  LogOut 
 } from "lucide-react";
 
 type RoleType = "MAHASISWA" | "PANITIA" | "ADMIN";
@@ -29,18 +27,16 @@ export function DesktopNav() {
   const router = useRouter();
   const supabase = createClient();
   const [role, setRole] = useState<RoleType>("MAHASISWA");
-  const [userName, setUserName] = useState<string>("Felix");
-  const [isSwitching, setIsSwitching] = useState<boolean>(false);
-  const [showRoleMenu, setShowRoleMenu] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string>("Pengguna");
 
   useEffect(() => {
-    // 1. Check local storage
+    // 1. Check local storage for initial render
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("user_role") as RoleType | null;
       if (stored) setRole(stored);
     }
 
-    // 2. Fetch from Supabase
+    // 2. Fetch authentic role from Supabase
     const fetchUser = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -62,57 +58,20 @@ export function DesktopNav() {
           }
         }
       } catch {
-        // Fallback
+        // Fallback to stored state
       }
     };
 
     fetchUser();
-
-    // 3. Listen for role change
-    const handleRoleChanged = () => {
-      const updated = localStorage.getItem("user_role") as RoleType | null;
-      if (updated) setRole(updated);
-    };
-
-    window.addEventListener("role_changed", handleRoleChanged);
-    return () => window.removeEventListener("role_changed", handleRoleChanged);
   }, []);
 
-  const handleQuickRoleSwitch = async (newRole: RoleType) => {
-    if (newRole === role) {
-      setShowRoleMenu(false);
-      return;
-    }
-    setIsSwitching(true);
-    setRole(newRole);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     if (typeof window !== "undefined") {
-      localStorage.setItem("user_role", newRole);
-      window.dispatchEvent(new Event("role_changed"));
+      localStorage.removeItem("user_role");
     }
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from("profiles")
-          .update({ role: newRole })
-          .eq("id", user.id);
-      }
-    } catch {
-      // Ignored for instant demo switch
-    }
-
-    setIsSwitching(false);
-    setShowRoleMenu(false);
-
-    // Contextual redirect if currently on unauthorized screen
-    if (newRole === "ADMIN" && pathname === "/") {
-      router.push("/admin");
-    } else if (newRole === "MAHASISWA" && (pathname.startsWith("/admin") || pathname.startsWith("/panitia"))) {
-      router.push("/events");
-    } else {
-      router.refresh();
-    }
+    router.push("/login");
+    router.refresh();
   };
 
   const getNavLinks = () => {
@@ -179,7 +138,7 @@ export function DesktopNav() {
           </Link>
         </div>
 
-        {/* Desktop Primary Navigation Links */}
+        {/* Desktop Primary Navigation Links (Strictly Filtered by Logged-in Role) */}
         <nav className="flex items-center gap-1">
           {navLinks.map((item) => {
             const Icon = item.icon;
@@ -201,80 +160,27 @@ export function DesktopNav() {
           })}
         </nav>
 
-        {/* Desktop Action Area: Fast Persona Switcher & Profile */}
+        {/* Desktop Action Area: Verified Role Badge & Profile */}
         <div className="flex items-center gap-3">
-          {/* Quick Role Switcher Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowRoleMenu(!showRoleMenu)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold transition-all shadow-2xs ${
-                role === "ADMIN"
-                  ? "bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100"
-                  : role === "PANITIA"
-                  ? "bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100"
-                  : "bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/80"
-              }`}
-            >
-              <Shield className="w-3.5 h-3.5" />
-              <span>
-                {role === "ADMIN" ? "KONSOL ADMIN" : role === "PANITIA" ? "PANITIA GATE" : "PESERTA FTI"}
+          {/* Static Verified Role Badge (No manual dropdown) */}
+          <div className="flex items-center">
+            {role === "ADMIN" && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-50 text-purple-800 border border-purple-200 text-xs font-bold shadow-2xs">
+                <Shield className="w-3.5 h-3.5 text-purple-600" />
+                <span>Administrator</span>
               </span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-            </button>
-
-            {/* Dropdown Menu */}
-            {showRoleMenu && (
-              <div 
-                className="absolute right-0 mt-2 w-56 rounded-2xl bg-white border border-slate-200 shadow-lg py-2 z-50 animate-in fade-in zoom-in-95 duration-100"
-              >
-                <div className="px-3 py-1.5 border-b border-slate-100 mb-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                    Ganti Mode Pengujian
-                  </span>
-                  <span className="text-[11px] text-slate-500">
-                    Pilih tampilan hak akses role:
-                  </span>
-                </div>
-
-                <button
-                  onClick={() => handleQuickRoleSwitch("MAHASISWA")}
-                  className={`w-full px-3 py-2 text-left text-xs font-semibold flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                    role === "MAHASISWA" ? "text-blue-700 bg-blue-50/50 font-bold" : "text-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-slate-400" />
-                    <span>Peserta (Mahasiswa)</span>
-                  </div>
-                  {role === "MAHASISWA" && <span className="text-[10px] font-bold text-blue-600">Aktif</span>}
-                </button>
-
-                <button
-                  onClick={() => handleQuickRoleSwitch("PANITIA")}
-                  className={`w-full px-3 py-2 text-left text-xs font-semibold flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                    role === "PANITIA" ? "text-emerald-700 bg-emerald-50/50 font-bold" : "text-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>Panitia Lapangan</span>
-                  </div>
-                  {role === "PANITIA" && <span className="text-[10px] font-bold text-emerald-600">Aktif</span>}
-                </button>
-
-                <button
-                  onClick={() => handleQuickRoleSwitch("ADMIN")}
-                  className={`w-full px-3 py-2 text-left text-xs font-semibold flex items-center justify-between hover:bg-slate-50 transition-colors ${
-                    role === "ADMIN" ? "text-blue-700 bg-blue-50/50 font-bold" : "text-slate-700"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-blue-600" />
-                    <span>Administrator</span>
-                  </div>
-                  {role === "ADMIN" && <span className="text-[10px] font-bold text-blue-600">Aktif</span>}
-                </button>
-              </div>
+            )}
+            {role === "PANITIA" && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold shadow-2xs">
+                <ScanLine className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Panitia Acara</span>
+              </span>
+            )}
+            {role === "MAHASISWA" && (
+              <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold shadow-2xs">
+                <User className="w-3.5 h-3.5 text-blue-600" />
+                <span>Mahasiswa</span>
+              </span>
             )}
           </div>
 
@@ -282,12 +188,22 @@ export function DesktopNav() {
           <Link
             href="/profile"
             className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-800 text-xs font-semibold transition-all shadow-2xs"
+            title="Buka Profil Akun"
           >
             <div className="w-6 h-6 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-[11px]">
-              {userName.charAt(0)}
+              {userName.charAt(0).toUpperCase()}
             </div>
             <span className="truncate max-w-[100px]">{userName.split(" ")[0]}</span>
           </Link>
+
+          {/* Quick Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 hover:border-red-200 active:scale-95 transition-all shadow-2xs"
+            title="Keluar Sesi (Logout)"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>
