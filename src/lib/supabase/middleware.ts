@@ -34,8 +34,57 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // Refresh auth token
-  await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const pathname = request.nextUrl.pathname
+
+  // 1. Protection for Admin Routes (/admin/*)
+  if (pathname.startsWith('/admin')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || profile.role !== 'ADMIN') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/unauthorized'
+      url.searchParams.set('required', 'ADMIN')
+      return NextResponse.redirect(url)
+    }
+  }
+
+  // 2. Protection for Panitia Routes (/scanner, /panitia/*)
+  if (pathname.startsWith('/scanner') || pathname.startsWith('/panitia')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      url.searchParams.set('next', pathname)
+      return NextResponse.redirect(url)
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (!profile || (profile.role !== 'PANITIA' && profile.role !== 'ADMIN')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/unauthorized'
+      url.searchParams.set('required', 'PANITIA')
+      return NextResponse.redirect(url)
+    }
+  }
 
   return supabaseResponse
 }
