@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Testing
+/coverage
+
+# Next.js build output
+/.next/
+/out/
+/build/
+/dist/
+
+# Production
+/build
+
+# Misc
+.DS_Store
+*.pem
+Thumbs.db
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Local environment files & secrets
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel & Supabase temp
+.vercel
+supabase/.temp/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# AI Agent, Skills & Tooling Caches (NEVER COMMIT)
+.agents/
+.gemini/
+.claude/
+.cursor/
+.windsurf/
+.system_generated/
+skills-lock.json
+.mcp.json
+agent.txt
+AI_HANDOVER_*.md
+*REQUIREMENT*.md
+
+# Legacy Notes / Analysis files
+fitur flask.md
+fitur flutter.md
+fitur gabungan.md
