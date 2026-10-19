@@ -27,6 +27,8 @@ export const metadata: Metadata = {
   },
 };
 
+import { Analytics } from "@vercel/analytics/next";
+
 export default function RootLayout({
   children,
 }: {
@@ -39,6 +41,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} min-h-full flex flex-col selection:bg-blue-600 selection:text-white bg-slate-50`}>
         {children}
+        <Analytics />
         <script
           dangerouslySetInnerHTML={{
             __html: `

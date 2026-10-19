@@ -4,11 +4,21 @@
   --background: #f8fafc;
   --foreground: #0f172a;
   --surface: #ffffff;
+  --surface-subtle: #f1f5f9;
   --surface-border: #e2e8f0;
+  --surface-border-strong: #cbd5e1;
+  --text-muted: #64748b;
+  --text-tertiary: #94a3b8;
   --brand-blue: #1d4ed8;
   --brand-blue-hover: #1e40af;
+  --brand-blue-subtle: #eff6ff;
   --accent-gold: #d97706;
+  --accent-gold-subtle: #fffbeb;
   --success-emerald: #059669;
+  --success-emerald-subtle: #ecfdf5;
+  --header-bg: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+  --header-text: #ffffff;
+  --card-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.08);
 }
 
 body {
