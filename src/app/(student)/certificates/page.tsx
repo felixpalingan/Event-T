@@ -13,7 +13,9 @@ import {
   ArrowLeft, 
   FileText,
   Calendar,
-  Sparkles
+  Sparkles,
+  Loader2,
+  ExternalLink
 } from "lucide-react";
 
 interface CertificateItem {
@@ -25,6 +27,7 @@ interface CertificateItem {
   hasPostTest: boolean;
   postTestScore: number | null;
   certificateNo: string;
+  certTemplateUrl: string | null;
 }
 
 export default function CertificatesPage() {
@@ -32,6 +35,7 @@ export default function CertificatesPage() {
   const [items, setItems] = useState<CertificateItem[]>([]);
   const [studentProfile, setStudentProfile] = useState<{ name: string; nim_nidn: string; prodi: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCertificatesData();
@@ -55,7 +59,7 @@ export default function CertificatesPage() {
 
       if (profile) setStudentProfile(profile);
 
-      // 2. Fetch tickets
+      // 2. Fetch tickets with event details & cert_template_url
       const { data: tickets } = await supabase
         .from("tickets")
         .select(`
@@ -65,7 +69,8 @@ export default function CertificatesPage() {
             id,
             title,
             event_start_at,
-            skpi_points
+            skpi_points,
+            cert_template_url
           )
         `)
         .eq("user_id", user.id);
@@ -101,8 +106,8 @@ export default function CertificatesPage() {
             const score = scoreMap.get(Number(t.event_id));
             let certNo = certMap.get(Number(t.event_id));
 
-            // If eligible (checked-in and post-test >= 60) but not yet in DB certificates, auto-mint
-            if (t.is_checked_in && score !== undefined && score !== null && score >= 60 && !certNo) {
+            // TASK 3.3: Student gets certificate simply by checking in + submitting post-test (NO KKM required)
+            if (t.is_checked_in && score !== undefined && score !== null && !certNo) {
               certNo = `CERT-FTI/${new Date().getFullYear()}/${String(t.event_id).padStart(3, "0")}/${profile?.nim_nidn?.slice(-4) || String(Math.floor(1000 + Math.random() * 9000))}`;
               try {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,6 +131,7 @@ export default function CertificatesPage() {
               hasPostTest: score !== undefined && score !== null,
               postTestScore: score ?? null,
               certificateNo: certNo || `DRAFT-FTI/${String(t.event_id).padStart(3, "0")}/${profile?.nim_nidn?.slice(-4) || "0001"}`,
+              certTemplateUrl: ev?.cert_template_url || null,
             };
           })
         );
@@ -141,31 +147,27 @@ export default function CertificatesPage() {
     }
   };
 
-  const handleDownloadPDF = (item: CertificateItem) => {
-    if (!studentProfile) return;
-
-    const doc = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: "a4",
-    });
-
-    const width = doc.internal.pageSize.getWidth();
-    const height = doc.internal.pageSize.getHeight();
-
+  // Helper to draw official institutional fallback certificate layout
+  const renderFallbackTemplate = (
+    doc: jsPDF,
+    item: CertificateItem,
+    profile: { name: string; nim_nidn: string; prodi: string },
+    width: number,
+    height: number
+  ) => {
     // Background: Clean Academic White
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, width, height, "F");
 
-    // Outer Navy Border
-    doc.setDrawColor(29, 78, 216);
-    doc.setLineWidth(2);
+    // Outer Royal Navy Border
+    doc.setDrawColor(29, 78, 216); // #1d4ed8
+    doc.setLineWidth(2.2);
     doc.rect(12, 12, width - 24, height - 24);
 
-    // Inner Gold Border
-    doc.setDrawColor(217, 119, 6);
-    doc.setLineWidth(0.6);
-    doc.rect(15, 15, width - 30, height - 30);
+    // Inner Trisakti Gold Accent Border
+    doc.setDrawColor(217, 119, 6); // #d97706
+    doc.setLineWidth(0.7);
+    doc.rect(15.5, 15.5, width - 31, height - 31);
 
     // Header
     doc.setFont("helvetica", "bold");
@@ -186,25 +188,25 @@ export default function CertificatesPage() {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Nomor Lisensi Resmi: ${item.certificateNo}`, width / 2, 62, { align: "center" });
+    doc.text(`Nomor Registrasi Lisensi: ${item.certificateNo}`, width / 2, 62, { align: "center" });
 
     doc.setFontSize(11);
     doc.setTextColor(51, 65, 85);
-    doc.text("Diberikan kepada mahasiswa:", width / 2, 78, { align: "center" });
+    doc.text("Diberikan sebagai penghargaan kepada mahasiswa:", width / 2, 78, { align: "center" });
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     doc.setTextColor(29, 78, 216);
-    doc.text(studentProfile.name.toUpperCase(), width / 2, 90, { align: "center" });
+    doc.text(profile.name.toUpperCase(), width / 2, 90, { align: "center" });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(71, 85, 105);
-    doc.text(`NIM: ${studentProfile.nim_nidn}  |  Program Studi: ${studentProfile.prodi}`, width / 2, 98, { align: "center" });
+    doc.text(`NIM: ${profile.nim_nidn}  |  Program Studi: ${profile.prodi}`, width / 2, 98, { align: "center" });
 
     doc.setFontSize(11);
     doc.setTextColor(51, 65, 85);
-    doc.text("Telah hadir dan menyelesaikan evaluasi kompetensi pada kegiatan:", width / 2, 114, { align: "center" });
+    doc.text("Telah hadir dan menyelesaikan seluruh tahapan evaluasi pada kegiatan:", width / 2, 114, { align: "center" });
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
@@ -218,13 +220,13 @@ export default function CertificatesPage() {
       month: "long",
       year: "numeric",
     });
-    doc.text(`Pelaksanaan: ${dateStr}`, width / 2, 135, { align: "center" });
+    doc.text(`Pelaksanaan: ${dateStr}`, width / 2, 134, { align: "center" });
 
     // Signatures
     const sigY = 160;
     doc.setFontSize(9);
     doc.setTextColor(100, 116, 139);
-    doc.text("Ketua Pelaksana Acara,", 55, sigY, { align: "center" });
+    doc.text("Ketua Pelaksana Kegiatan,", 55, sigY, { align: "center" });
     doc.setFont("helvetica", "bold");
     doc.setTextColor(15, 23, 42);
     doc.text("( Panitia FTI Event!t )", 55, sigY + 18, { align: "center" });
@@ -236,7 +238,91 @@ export default function CertificatesPage() {
     doc.setTextColor(15, 23, 42);
     doc.text("( Pimpinan FTI Universitas Trisakti )", width - 55, sigY + 18, { align: "center" });
 
-    doc.save(`Sertifikat_${studentProfile.nim_nidn}_${item.eventId}.pdf`);
+    // Official Verification Tag
+    doc.setFontSize(8);
+    doc.setTextColor(148, 163, 184);
+    doc.text("Dokumen digital ini diverifikasi sah oleh Biro Administrasi Akademik & Kemahasiswaan (BAAK) FTI Usakti", width / 2, height - 10, { align: "center" });
+  };
+
+  // TASK 3.4: PDF Generator supporting custom event template background
+  const handleDownloadPDF = async (item: CertificateItem) => {
+    if (!studentProfile) return;
+
+    setDownloadingId(item.eventId);
+
+    try {
+      const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const width = doc.internal.pageSize.getWidth();
+      const height = doc.internal.pageSize.getHeight();
+
+      if (item.certTemplateUrl) {
+        try {
+          // Attempt to load custom background template image
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = item.certTemplateUrl!;
+          });
+
+          // Draw the template image filling the whole A4 canvas
+          doc.addImage(img, "JPEG", 0, 0, width, height);
+
+          // Overlay personalized student metadata on template
+          // 1. Student Name (Large Bold)
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(24);
+          doc.setTextColor(15, 23, 42);
+          doc.text(studentProfile.name.toUpperCase(), width / 2, 104, { align: "center" });
+
+          // 2. NIM & Prodi
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.setTextColor(51, 65, 85);
+          doc.text(`NIM: ${studentProfile.nim_nidn}   |   ${studentProfile.prodi}`, width / 2, 113, { align: "center" });
+
+          // 3. Event Title
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(14);
+          doc.setTextColor(29, 78, 216);
+          doc.text(`"${item.eventTitle}"`, width / 2, 128, { align: "center" });
+
+          // 4. Date
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(10);
+          doc.setTextColor(100, 116, 139);
+          const dateStr = new Date(item.eventDate).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          });
+          doc.text(`Jakarta, ${dateStr}`, width / 2, 136, { align: "center" });
+
+          // 5. Verification Code Footer
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(9);
+          doc.setTextColor(100, 116, 139);
+          doc.text(`Nomor Sertifikat: ${item.certificateNo}`, width / 2, height - 16, { align: "center" });
+        } catch (imgErr) {
+          console.warn("Failed loading custom template image, rendering official Trisakti fallback layout:", imgErr);
+          renderFallbackTemplate(doc, item, studentProfile, width, height);
+        }
+      } else {
+        renderFallbackTemplate(doc, item, studentProfile, width, height);
+      }
+
+      doc.save(`Sertifikat_${studentProfile.nim_nidn}_${item.eventId}.pdf`);
+    } catch (err) {
+      console.error("PDF generation error:", err);
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   return (
@@ -253,12 +339,12 @@ export default function CertificatesPage() {
           <div>
             <h1 className="text-sm md:text-xl font-bold text-slate-900 tracking-tight">Klaim E-Sertifikat Resmi</h1>
             <span className="text-[10px] md:text-xs text-amber-700 font-semibold block">
-              Sertifikat Digital PDF Berlisensi Universitas Trisakti
+              Sertifikat Digital PDF Berlisensi Fakultas Teknologi Informasi Trisakti
             </span>
           </div>
         </div>
-        <span className="text-[10px] md:text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200">
-          Syarat: Hadir + Lulus Post-Test
+        <span className="text-[10px] md:text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-xl border border-blue-200">
+          Syarat: Hadir Pintu + Selesai Post-Test
         </span>
       </header>
 
@@ -266,7 +352,7 @@ export default function CertificatesPage() {
       <main className="flex-1 px-4 md:px-0 py-4 md:py-6 space-y-4">
         <div className="text-center px-2 max-w-xl mx-auto">
           <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
-            Sertifikat PDF berlisensi resmi universitas dapat langsung diunduh ke ponsel atau laptop setelah kedua syarat kelulusan terpenuhi.
+            Sertifikat resmi universitas diterbitkan otomatis setelah Anda melakukan presensi scan QR di pintu aula dan mengirimkan evaluasi Post-Test.
           </p>
         </div>
 
@@ -275,7 +361,7 @@ export default function CertificatesPage() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3 animate-pulse"
+                className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-3 animate-pulse"
               >
                 <div className="flex justify-between">
                   <div className="h-4 w-24 bg-slate-100 rounded"></div>
@@ -310,16 +396,17 @@ export default function CertificatesPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {items.map((item) => {
-              const isEligible = item.isCheckedIn && item.hasPostTest && (item.postTestScore ?? 0) >= 60;
+              // TASK 3.3: Eligible as long as checked in and post-test submitted (NO KKM required)
+              const isEligible = item.isCheckedIn && item.hasPostTest;
 
               return (
                 <div
                   key={item.eventId}
-                  className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between space-y-4 hover:border-slate-300 transition-all"
+                  className="p-5 rounded-3xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between space-y-4 hover:border-blue-300 transition-all"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between text-[11px]">
-                      <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                      <span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200">
                         Sertifikat Kelulusan
                       </span>
                       <span className="font-mono text-slate-400 text-[10px]">
@@ -345,26 +432,24 @@ export default function CertificatesPage() {
                           <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
                         )}
                         <span className="font-medium text-[11px]">
-                          {item.isCheckedIn ? "Presensi Hadir (Tervalidasi Panitia)" : "Belum Check-In di Pintu Masuk"}
+                          {item.isCheckedIn ? "Presensi Hadir (Tervalidasi Panitia Pintu)" : "Belum Check-In di Pintu Masuk"}
                         </span>
                       </div>
 
                       {/* 2. Post-Test Evaluation */}
                       <div className={`p-2.5 rounded-xl border flex items-center gap-2.5 ${
-                        item.hasPostTest && (item.postTestScore ?? 0) >= 60
+                        item.hasPostTest
                           ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                          : item.hasPostTest
-                          ? "bg-red-50 border-red-200 text-red-800"
                           : "bg-slate-50 border-slate-200 text-slate-500"
                       }`}>
-                        {item.hasPostTest && (item.postTestScore ?? 0) >= 60 ? (
+                        {item.hasPostTest ? (
                           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                         ) : (
                           <AlertCircle className="w-4 h-4 text-amber-500 shrink-0" />
                         )}
                         <span className="font-medium text-[11px]">
                           {item.hasPostTest 
-                            ? `Post-Test Selesai (Skor ${item.postTestScore}/100)${(item.postTestScore ?? 0) < 60 ? " - Belum Memenuhi KKM" : ""}`
+                            ? `Post-Test Selesai (${item.postTestScore !== null ? `Nilai: ${item.postTestScore}/100` : "Terkirim"})`
                             : "Belum Mengerjakan Post-Test"}
                         </span>
                       </div>
@@ -376,17 +461,27 @@ export default function CertificatesPage() {
                     {isEligible ? (
                       <button
                         onClick={() => handleDownloadPDF(item)}
-                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs"
+                        disabled={downloadingId === item.eventId}
+                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-98 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs disabled:opacity-60"
                       >
-                        <Download className="w-4 h-4" />
-                        <span>Unduh E-Sertifikat (.PDF)</span>
+                        {downloadingId === item.eventId ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Membuat Berkas PDF...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4" />
+                            <span>Unduh E-Sertifikat (.PDF)</span>
+                          </>
+                        )}
                       </button>
                     ) : (
                       <Link
                         href={`/test/${item.eventId}`}
                         className="w-full py-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 active:scale-98 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-all border border-slate-200"
                       >
-                        <FileText className="w-4 h-4 text-amber-600" />
+                        <FileText className="w-4 h-4 text-blue-600" />
                         <span>Selesaikan Post-Test</span>
                       </Link>
                     )}

@@ -13,7 +13,9 @@ import {
   Send,
   Lock,
   QrCode,
-  AlertTriangle
+  AlertTriangle,
+  FileCheck2,
+  Sparkles
 } from "lucide-react";
 
 interface Question {
@@ -78,7 +80,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
           (payload: any) => {
             if (payload?.new) {
               setEvent((prev) =>
-                prev ? { ...prev, is_post_test_open: payload.new.is_post_test_open } : null
+                prev ? { ...prev, is_post_test_open: Boolean(payload.new.is_post_test_open) } : null
               );
             }
           }
@@ -153,6 +155,10 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
         if (scoreData) {
           setPreScore(scoreData.pre_test_score);
           setPostScore(scoreData.post_test_score);
+          // If pre-test already done but post-test not done, default to POST tab
+          if (scoreData.pre_test_score !== null && scoreData.post_test_score === null) {
+            setTestType("POST");
+          }
         }
       } else {
         setHasTicket(false);
@@ -228,11 +234,16 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
       } else {
         if (testType === "PRE") {
           setPreScore(calculatedScore);
+          setMessage({
+            type: "success",
+            text: `Jawaban Pre-Test berhasil dikirim! Nilai awal Anda: ${calculatedScore}/100. Silakan ikuti pemaparan materi acara.`,
+          });
         } else {
           setPostScore(calculatedScore);
 
-          // If passed post-test (score >= 60) and checked-in, auto-register official certificate
-          if (calculatedScore >= 60 && ticket?.is_checked_in) {
+          // TASK 3.3: CERTIFICATE AUTO-MINT ON POST-TEST SUBMIT
+          // Student gets certificate simply by being checked in and completing post-test (NO score >= 60 threshold required)
+          if (ticket?.is_checked_in) {
             const certNo = `CERT-FTI/${new Date().getFullYear()}/${String(eventId).padStart(3, "0")}/${userProfile?.nim_nidn?.slice(-4) || String(Math.floor(1000 + Math.random() * 9000))}`;
             try {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -243,15 +254,15 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
                 issued_at: new Date().toISOString(),
               } as any, { onConflict: "user_id,event_id" });
             } catch {
-              // Certificate table handled
+              // Ignore duplicate
             }
           }
-        }
 
-        setMessage({
-          type: "success",
-          text: `Jawaban berhasil dikirim! Nilai ${testType === "PRE" ? "Pre-Test" : "Post-Test"} Anda: ${calculatedScore}/100`,
-        });
+          setMessage({
+            type: "success",
+            text: `Selamat! Jawaban Post-Test berhasil dikirim (Skor: ${calculatedScore}/100). E-Sertifikat resmi Anda telah diterbitkan!`,
+          });
+        }
       }
     } catch (err: unknown) {
       const error = err as Error;
@@ -277,7 +288,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
         {/* Title */}
         <div>
           <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest block mb-0.5">
-            Ujian Pemahaman Peserta
+            Evaluasi Pemahaman Mahasiswa
           </span>
           <h1 className="text-sm md:text-base font-bold text-slate-900 leading-snug">
             {event?.title || "Evaluasi Kegiatan FTI Trisakti"}
@@ -285,20 +296,25 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
 
         {/* Tab Switcher: Pre-Test vs Post-Test */}
-        <div className="grid grid-cols-2 p-1 rounded-xl bg-slate-100 border border-slate-200">
+        <div className="grid grid-cols-2 p-1 rounded-2xl bg-slate-100 border border-slate-200">
           <button
             type="button"
             onClick={() => {
               setTestType("PRE");
               setMessage(null);
             }}
-            className={`py-2 rounded-lg text-xs font-bold active:scale-95 transition-all ${
+            className={`py-2 rounded-xl text-xs font-bold active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
               testType === "PRE"
-                ? "bg-white text-blue-600 shadow-xs"
+                ? "bg-white text-blue-700 shadow-2xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            Pre-Test (Awal) {preScore !== null ? `(${preScore}/100)` : ""}
+            <span>Pre-Test (Awal)</span>
+            {preScore !== null && (
+              <span className="px-1.5 py-0.2 rounded bg-blue-50 text-[10px] text-blue-700 font-mono font-bold">
+                {preScore}
+              </span>
+            )}
           </button>
           <button
             type="button"
@@ -306,26 +322,35 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
               setTestType("POST");
               setMessage(null);
             }}
-            className={`py-2 rounded-lg text-xs font-bold active:scale-95 transition-all ${
+            className={`py-2 rounded-xl text-xs font-bold active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
               testType === "POST"
-                ? "bg-white text-blue-600 shadow-xs"
+                ? "bg-white text-blue-700 shadow-2xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
-            Post-Test (Akhir) {postScore !== null ? `(${postScore}/100)` : ""}
+            <span>Post-Test (Akhir)</span>
+            {postScore !== null && (
+              <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-[10px] text-emerald-700 font-mono font-bold">
+                {postScore}
+              </span>
+            )}
           </button>
         </div>
 
         {/* Message Banner */}
         {message && (
           <div
-            className={`p-3 rounded-xl flex items-center gap-2.5 text-xs font-medium ${
+            className={`p-3.5 rounded-2xl flex items-center gap-2.5 text-xs font-medium ${
               message.type === "success"
-                ? "bg-emerald-50 border border-emerald-200 text-emerald-800"
-                : "bg-red-50 border border-red-200 text-red-800"
+                ? "bg-emerald-50 border border-emerald-200 text-emerald-900"
+                : "bg-red-50 border border-red-200 text-red-900"
             }`}
           >
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            {message.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 shrink-0 text-red-600" />
+            )}
             <span>{message.text}</span>
           </div>
         )}
@@ -338,7 +363,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
             ))}
           </div>
         ) : hasTicket === false ? (
-          /* Case 0: Not registered for this event */
+          /* GATING CASE 1: Not registered for this event */
           <div className="p-6 rounded-3xl bg-white border border-slate-200 text-center shadow-xs space-y-3">
             <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
             <h3 className="text-sm font-bold text-slate-900">Belum Terdaftar pada Acara Ini</h3>
@@ -352,11 +377,32 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
               Klaim Tiket di Halaman Kegiatan
             </Link>
           </div>
+        ) : !ticket?.is_checked_in ? (
+          /* GATING CASE 2 (TASK 3.1): PRE-TEST & POST-TEST REQUIRE DOOR CHECK-IN */
+          <div className="p-6 rounded-3xl bg-white border border-amber-200 text-center shadow-xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto">
+              <QrCode className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-900">Presensi Pintu Masuk Diperlukan</h3>
+            <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
+              Untuk membuka lembar <strong>{testType === "PRE" ? "Pre-Test" : "Post-Test"}</strong>, Anda harus melakukan presensi scan kode QR di pintu registrasi aula terlebih dahulu.
+            </p>
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-500 max-w-xs mx-auto">
+              Tunjukkan QR tiket di ponsel Anda kepada panitia bertugas di meja gerbang aula.
+            </div>
+            <Link
+              href="/tickets"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold active:scale-95 transition-all shadow-xs"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Buka QR Boarding Pass Tiket</span>
+            </Link>
+          </div>
         ) : currentScore !== null ? (
-          /* Case 1: Already completed this test */
-          <div className="p-6 rounded-3xl bg-white border border-slate-200 text-center shadow-xs space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mx-auto">
-              <CheckCircle2 className="w-6 h-6" />
+          /* CASE 3: Already completed the active test */
+          <div className="p-6 rounded-3xl bg-white border border-slate-200 text-center shadow-xs space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 mx-auto">
+              <FileCheck2 className="w-6 h-6" />
             </div>
             <div>
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -368,12 +414,23 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
             <p className="text-xs text-slate-600 max-w-sm mx-auto leading-relaxed">
               {testType === "POST" 
-                ? currentScore >= 60 
-                  ? "Selamat! Anda telah lulus evaluasi Post-Test. E-Sertifikat resmi kelulusan telah diterbitkan."
-                  : "Anda telah menyelesaikan evaluasi. Skor di bawah ambang batas minimal (60)."
-                : "Nilai awal Anda telah tersimpan sebagai tolok ukur pemahaman materi awal kegiatan."}
+                ? "Selamat! Anda telah menyelesaikan seluruh rangkaian evaluasi kegiatan FTI Trisakti. E-Sertifikat resmi kelulusan Anda telah diterbitkan."
+                : "Nilai awal Anda telah tersimpan sebagai tolok ukur pemahaman sebelum pemaparan materi dimulai. Silakan ikuti kegiatan hingga selesai."}
             </p>
-            {testType === "POST" && currentScore >= 60 && (
+
+            {/* If Pre-Test done, suggest Post-Test */}
+            {testType === "PRE" && (
+              <button
+                type="button"
+                onClick={() => setTestType("POST")}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold active:scale-95 transition-all shadow-xs"
+              >
+                <span>Lanjut ke Post-Test Akhir</span>
+              </button>
+            )}
+
+            {/* If Post-Test done, directly download certificate */}
+            {testType === "POST" && (
               <Link
                 href="/certificates"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold active:scale-95 transition-all shadow-xs"
@@ -383,32 +440,33 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
               </Link>
             )}
           </div>
-        ) : testType === "POST" && !ticket?.is_checked_in ? (
-          /* Case 2: Post-Test requested but user hasn't checked in at the door */
-          <div className="p-6 rounded-3xl bg-white border border-amber-200 text-center shadow-xs space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mx-auto">
-              <QrCode className="w-6 h-6" />
+        ) : testType === "POST" && preScore === null ? (
+          /* GATING CASE 4: Post-Test requested before completing Pre-Test */
+          <div className="p-6 rounded-3xl bg-white border border-blue-200 text-center shadow-xs space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600 mx-auto">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-            <h3 className="text-sm font-bold text-slate-900">Presensi Pintu Diperlukan</h3>
+            <h3 className="text-sm font-bold text-slate-900">Selesaikan Pre-Test Terlebih Dahulu</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-              Anda belum melakukan check-in scan QR di pintu masuk aula. Silakan tunjukkan QR tiket Anda kepada panitia di gerbang masuk terlebih dahulu.
+              Anda belum mengisi lembar Pre-Test awal. Silakan kerjakan Pre-Test terlebih dahulu sebelum melanjutkan ke sesi Post-Test.
             </p>
-            <Link
-              href="/tickets"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold active:scale-95 transition-all shadow-xs"
+            <button
+              type="button"
+              onClick={() => setTestType("PRE")}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold active:scale-95 transition-all shadow-xs"
             >
-              <span>Buka QR Boarding Pass Tiket</span>
-            </Link>
+              <span>Buka Lembar Pre-Test</span>
+            </button>
           </div>
         ) : testType === "POST" && !event?.is_post_test_open ? (
-          /* Case 3: Post-Test requested but locked by Panitia */
+          /* GATING CASE 5 (TASK 3.2): Post-Test locked by Panitia */
           <div className="p-6 rounded-3xl bg-white border border-slate-200 text-center shadow-xs space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 mx-auto">
               <Lock className="w-6 h-6" />
             </div>
             <h3 className="text-sm font-bold text-slate-900">Akses Post-Test Masih Terkunci</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-              Panitia acara akan membuka akses evaluasi ini secara serentak ketika narasumber selesai memaparkan materi. Halaman ini akan terbuka otomatis begitu gembok dibuka.
+              Panitia acara akan membuka akses evaluasi ini secara serentak ketika narasumber selesai memaparkan materi. Halaman ini akan terbuka otomatis begitu gembok dibuka oleh panitia.
             </p>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-semibold">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
@@ -416,7 +474,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
             </div>
           </div>
         ) : questions.length === 0 ? (
-          /* Case 4: No questions created yet */
+          /* CASE 6: No questions created yet */
           <div className="text-center py-10 px-4 rounded-3xl bg-white border border-slate-200 shadow-xs">
             <HelpCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
             <p className="text-xs text-slate-500">
@@ -424,8 +482,18 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
             </p>
           </div>
         ) : (
-          /* Case 5: Ready to take test! */
+          /* CASE 7: Ready to answer test! */
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="p-3 rounded-2xl bg-blue-50/70 border border-blue-200/80 flex items-center justify-between text-xs">
+              <span className="font-bold text-blue-900 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-500" />
+                <span>Lembar Soal {testType === "PRE" ? "Pre-Test (Awal)" : "Post-Test (Akhir)"}</span>
+              </span>
+              <span className="font-mono text-blue-700 font-bold">
+                {Object.keys(answers).length} / {questions.length} Terjawab
+              </span>
+            </div>
+
             {questions.map((q) => {
               const currentAnswer = answers[q.question_number];
 
@@ -464,7 +532,7 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
                           onClick={() => handleSelectAnswer(q.question_number, key)}
                           className={`w-full p-3 rounded-xl text-left text-xs font-medium border flex items-center gap-2.5 active:scale-[0.99] transition-all ${
                             isSelected
-                              ? "bg-blue-50 border-blue-600 text-blue-900"
+                              ? "bg-blue-50 border-blue-600 text-blue-900 shadow-2xs"
                               : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                           }`}
                         >
@@ -489,12 +557,12 @@ function TestScreenContent({ params }: { params: Promise<{ id: string }> }) {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full py-3.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {submitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Menghitung Skor...</span>
+                  <span>Menyimpan Jawaban...</span>
                 </>
               ) : (
                 <>
