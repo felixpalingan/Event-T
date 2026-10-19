@@ -20,6 +20,8 @@ import {
   LogOut 
 } from "lucide-react";
 
+import { NotificationBell } from "@/components/notifications/NotificationBell";
+
 type RoleType = "MAHASISWA" | "PANITIA" | "ADMIN";
 
 export function DesktopNav() {
@@ -183,6 +185,9 @@ export function DesktopNav() {
               </span>
             )}
           </div>
+
+          {/* In-App Notification Center */}
+          <NotificationBell />
 
           {/* User Account / Profile Button */}
           <Link

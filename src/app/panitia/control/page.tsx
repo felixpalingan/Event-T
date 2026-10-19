@@ -13,7 +13,8 @@ import {
   Award, 
   CheckCircle2, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Bell
 } from "lucide-react";
 
 interface EventControlItem {
@@ -32,6 +33,7 @@ export default function EventControlPage() {
   const [events, setEvents] = useState<EventControlItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const [sendingReminderId, setSendingReminderId] = useState<number | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -140,6 +142,28 @@ export default function EventControlPage() {
       setMessage(error?.message || "Gagal mengubah status post-test.");
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  const handleSendReminder = async (eventId: number, eventTitle: string) => {
+    setSendingReminderId(eventId);
+    try {
+      const { data, error } = await supabase.rpc("dispatch_event_reminders", {
+        p_target_event_id: eventId,
+      });
+
+      if (error) {
+        setMessage(`Gagal mengirim pengingat: ${error.message}`);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const count = (data as any)?.notifications_sent ?? 0;
+        setMessage(`Berhasil mengirimkan notifikasi pengingat ke ${count} mahasiswa terdaftar untuk acara "${eventTitle}".`);
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      setMessage(error?.message || "Gagal mengirim pengingat.");
+    } finally {
+      setSendingReminderId(null);
     }
   };
 
@@ -277,6 +301,18 @@ export default function EventControlPage() {
                     {event.is_post_test_open ? "Kunci Akses" : "Buka Post-Test"}
                   </button>
                 </div>
+
+                {/* Manual Reminder Button */}
+                <button
+                  type="button"
+                  onClick={() => handleSendReminder(event.id, event.title)}
+                  disabled={sendingReminderId === event.id}
+                  className="w-full py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 text-xs font-bold active:scale-98 transition-all flex items-center justify-center gap-1.5 shadow-2xs disabled:opacity-50"
+                  title="Kirim notifikasi pengingat ke seluruh mahasiswa terdaftar"
+                >
+                  <Bell className="w-3.5 h-3.5 text-blue-600" />
+                  <span>{sendingReminderId === event.id ? "Mengirim Pengingat..." : "Kirim Pengingat H-1 (Manual)"}</span>
+                </button>
               </div>
             ))}
           </div>

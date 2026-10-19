@@ -20,6 +20,7 @@ import {
   Settings2,
   FileSpreadsheet
 } from "lucide-react";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 interface EventItem {
   id: number;
@@ -133,6 +134,7 @@ export default function Home() {
 
         {/* Dynamic Right Header Action based on Role */}
         <div className="flex items-center gap-2">
+          <NotificationBell />
           {role === "ADMIN" && (
             <Link
               href="/admin"
